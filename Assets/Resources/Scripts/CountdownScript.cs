@@ -29,14 +29,14 @@ public class CountdownScript : MonoBehaviour
 
     private List<AudioClip> musicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
-    private List<string> randomBumpFilePaths = new List<string>();    
+    private List<string> ptvBumpFilePaths = new List<string>();    
     private int videoIndex = 0;
     private int countdownTimer = 0;
     private int musicIndex = 0;
     private bool firedAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
 
-    private enum eState {
+    private enum eTVState {
         UNSET,
         COUNTDOWN,
         TRANSITIONING,
@@ -44,13 +44,17 @@ public class CountdownScript : MonoBehaviour
         LOGO,
         BUMP
     }
-    private eState state;
+    private eTVState state;
     private bool playbackStarted = false;
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
     private int preshowWait = 1500;
     private int mMidShowWait = 180;
     private float mMaxVolume = 1.0f;
+    private string mSongName;
+
+    private string mFilesFound = "";
+    private List<string> mVideoFilePathsFound = new List<string>();
 
     // Start is called before the first frame update
     void Start() {
@@ -58,8 +62,15 @@ public class CountdownScript : MonoBehaviour
         LoadMusic();
         LoadBumps();
         List<string> itemNames = new List<string>();
-        for(int i=0; i < videoFiles.Count; i++) {
-            itemNames.Add(videoFiles[i].name);
+        var seriesData = FileUtils.LoadSeriesData();
+        foreach(VideoSeries series in seriesData) {
+            FileUtils.FindAllFilesForPath(ref mVideoFilePathsFound, series.FilePath);
+        }
+
+        for (int i=0; i < videoFiles.Count; i++) {
+            if(videoFiles[i] != null) {
+                itemNames.Add(videoFiles[i].name);
+            }
         }
         scheduleScript.LoadSchedule(itemNames);
         ResetToCountdownState(preshowWait);
@@ -83,16 +94,17 @@ public class CountdownScript : MonoBehaviour
 
     private void LoadBumps() {
         musicFiles.Clear();
-        var info = new DirectoryInfo(Application.dataPath + "/Resources/Bumps/Random Bumps");
-        var files = info.GetFiles();
-        foreach (FileInfo file in files) {
-            if (!file.Name.Contains(".meta")) {
-                randomBumpFilePaths.Add(file.Name);
-            }
-        }
+        string bumpDirectory = "C:/Users/Jorda/Videos/PTV/Bumps";
+        List<string> bumpFileNames = new List<string>();
+        FileUtils.FindAllFilesForPath(ref ptvBumpFilePaths, bumpDirectory);
+        //var info = new DirectoryInfo(Application.dataPath + "/Resources/Bumps/Random Bumps");
+        //var files = info.GetFiles();
+        //foreach (FileInfo file in files) {
+        //    if (!file.Name.Contains(".meta")) {
+        //        randomBumpFilePaths.Add(file.Name);
+        //    }
+       //}
     }
-
-    private string mSongName;
 
     private void PullUpNextTrack() {
         if(musicFiles.Count >= musicFilePaths.Count) {
@@ -130,7 +142,7 @@ public class CountdownScript : MonoBehaviour
         void TransitionSongs() {
             StartCoroutine(FadeInMusic());
         }
-        if(state == eState.COUNTDOWN && name == musicPlayer.clip.name) {
+        if(state == eTVState.COUNTDOWN && name == musicPlayer.clip.name) {
             StartCoroutine(FadeOutMusic(TransitionSongs));
         }
     }
@@ -138,7 +150,7 @@ public class CountdownScript : MonoBehaviour
     
 
     public void StartCountdown(int numSeconds) {
-        state = eState.COUNTDOWN;
+        state = eTVState.COUNTDOWN;
         VisualizerParent.SetActive(true);
         countdownTimer = numSeconds;
         StartCoroutine(DoCountdown());
@@ -154,7 +166,7 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void Update() {
-        if(state == eState.COUNTDOWN) {
+        if(state == eTVState.COUNTDOWN) {
             if (!musicPlayer.isPlaying) {
                 PlayNextMusicClip();
             }
@@ -178,7 +190,7 @@ public class CountdownScript : MonoBehaviour
             volumeSlider.gameObject.SetActive(false);
         }
 
-        if(state == eState.BUMP) {
+        if(state == eTVState.BUMP) {
 
             if (videoPlayer.isPlaying) {
                 bumpPlaybackStarted = true;
@@ -191,8 +203,8 @@ public class CountdownScript : MonoBehaviour
             }
         }
         
-        playbackLogo.gameObject.SetActive(state == eState.PLAYBACK);
-        if (state == eState.PLAYBACK) {
+        playbackLogo.gameObject.SetActive(state == eTVState.PLAYBACK);
+        if (state == eTVState.PLAYBACK) {
             if (Input.GetKeyDown(KeyCode.X)) {
                 videoPlayer.time = videoPlayer.length - 10;
             }
@@ -259,7 +271,7 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void OnCountdownAlmostComplete() {
-        state = eState.TRANSITIONING;
+        state = eTVState.TRANSITIONING;
         StartCoroutine(FadeOutMusic(musicPlayer.Stop));
         StartCoroutine(TriggerScrimFadeOut());
     }
@@ -331,19 +343,20 @@ public class CountdownScript : MonoBehaviour
     void PlayBumpAndLogo(Action postLogoAction) {
         VisualizerParent.SetActive(false);
         scheduleScript.HideSchedule();
-        state = eState.BUMP;
+        state = eTVState.BUMP;
         bumpPlaybackStarted = false;
         videoPlayer.Stop();
-        if (randomBumpFilePaths.Count > 0) {
-            int bumpIndex = UnityEngine.Random.Range(0, randomBumpFilePaths.Count);
-            string fileName = randomBumpFilePaths[bumpIndex];
+        if (ptvBumpFilePaths.Count > 0) {
+            int bumpIndex = UnityEngine.Random.Range(0, ptvBumpFilePaths.Count);
+            string fileName = ptvBumpFilePaths[bumpIndex];
             fileName = fileName.Substring(0, fileName.LastIndexOf("."));
-            VideoClip clp = Resources.Load<VideoClip>("Bumps/Random Bumps/" + fileName);
+            //VideoClip clp = Resources.Load<VideoClip>("Bumps/Random Bumps/" + fileName);
+            videoPlayer.url = ptvBumpFilePaths[bumpIndex];
             videoPlayer.enabled = true;
-            videoPlayer.clip = clp;
+            //videoPlayer.clip = clp;
             videoPlayer.Play();
             mQueuedPostLogoAction = postLogoAction;
-            randomBumpFilePaths.RemoveAt(bumpIndex);
+            ptvBumpFilePaths.RemoveAt(bumpIndex);
         } else {
             //play the bump sound effects
             mLogoScript.PlayLogo(OnLogoPrerollComplete);
@@ -351,7 +364,7 @@ public class CountdownScript : MonoBehaviour
     }
 
     void OnBumpCompleted() {
-        state = eState.LOGO;
+        state = eTVState.LOGO;
         videoPlayer.enabled = false;
         //play the bump sound effects
         mLogoScript.PlayLogo(mQueuedPostLogoAction);
@@ -362,12 +375,14 @@ public class CountdownScript : MonoBehaviour
         videoPlayer.Stop();
         //Start the subtitles
         StartSubtitles(subFiles[videoIndex]);
-
-        videoPlayer.clip = videoFiles[videoIndex++];
+        
+        videoPlayer.clip = null;
+        videoPlayer.url = mVideoFilePathsFound[0];
+        // videoPlayer.clip = videoFiles[videoIndex++];
         videoPlayer.enabled = true;
         videoPlayer.Play();
         //This has to be called after the call to viddyP.play
-        state = eState.PLAYBACK;
+        state = eTVState.PLAYBACK;
     }
 
     void OnLogoPostRollComplete() {

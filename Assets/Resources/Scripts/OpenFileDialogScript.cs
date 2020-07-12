@@ -92,15 +92,7 @@ public class OpenFileDialogScript : MonoBehaviour
     }
 
     void LoadSeriesData() {
-        string path = Application.streamingAssetsPath + "/Series/SeriesInfo.json";
-        string str = "";
-        using (FileStream fs = new FileStream(path, FileMode.Open)) {
-            using (StreamReader reader = new StreamReader(fs)) {
-                str += reader.ReadToEnd(); 
-            }
-            VideoSeries[] vidArray = JsonHelper.FromJson<VideoSeries>(str);
-            mSeries.AddRange(vidArray);
-        }
+        mSeries.AddRange(FileUtils.LoadSeriesData());
     }
 
     public void _SaveItemInfo() {

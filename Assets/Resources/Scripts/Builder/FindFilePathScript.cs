@@ -2,6 +2,7 @@
 using UnityEngine;
 using TMPro;
 
+
 public class FindFilePathScript : MonoBehaviour {
     public delegate void OnFilePathFound(string chosenFilePath);
     public event OnFilePathFound OnFilePathFoundEvent;
@@ -13,11 +14,13 @@ public class FindFilePathScript : MonoBehaviour {
     }
 
     public void _OnFindFilePathClicked() {
+#if UNITY_EDITOR
         string path = EditorUtility.OpenFolderPanel("", lastKnownPath, "");
         if (path != "" && OnFilePathFoundEvent != null) {
             OnFilePathFoundEvent(path);
             lastKnownPath = path;
         }
+#endif
     }
 
 }
