@@ -23,10 +23,9 @@ public class CountdownScript : MonoBehaviour
     public GameObject VisualizerParent;
     public Slider volumeSlider;
     public SubtitleDisplayer subtitleDisplayer;
+    public TextMeshProUGUI reminderText;
 
-    public List<VideoClip> videoFiles;
     public List<TextAsset> subFiles;
-
     private List<AudioClip> musicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
     private List<string> ptvBumpFilePaths = new List<string>();    
@@ -35,6 +34,8 @@ public class CountdownScript : MonoBehaviour
     private int musicIndex = 0;
     private bool firedAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
+    private const string mMusicDirectory = "D:/Music/PTV";
+    private const string mBumpDirectory = "C:/Users/Jorda/Videos/PTV/Bumps";
 
     private enum eTVState {
         UNSET,
@@ -48,38 +49,114 @@ public class CountdownScript : MonoBehaviour
     private bool playbackStarted = false;
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
-    private int preshowWait = 1500;
+    private int preshowWait = 15;
     private int mMidShowWait = 180;
     private float mMaxVolume = 1.0f;
     private string mSongName;
 
     private string mFilesFound = "";
     private List<string> mVideoFilePathsFound = new List<string>();
+    private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
 
     // Start is called before the first frame update
     void Start() {
         streamOverText.enabled = false;
         LoadMusic();
         LoadBumps();
-        List<string> itemNames = new List<string>();
-        var seriesData = FileUtils.LoadSeriesData();
-        foreach(VideoSeries series in seriesData) {
-            FileUtils.FindAllFilesForPath(ref mVideoFilePathsFound, series.FilePath);
-        }
+        LoadVideos();
+        ResetToCountdownState(preshowWait);
+    }
 
-        for (int i=0; i < videoFiles.Count; i++) {
-            if(videoFiles[i] != null) {
-                itemNames.Add(videoFiles[i].name);
+    private void LoadVideos() {
+        void RandomizeFilePaths() {
+            //Randomize the file paths
+            for (int i = 0; i < mVideoFilePathsFound.Count; i++) {
+                int newIndex = UnityEngine.Random.Range(0, mVideoFilePathsFound.Count);
+                string currentPath = mVideoFilePathsFound[i];
+                mVideoFilePathsFound[i] = mVideoFilePathsFound[newIndex];
+                mVideoFilePathsFound[newIndex] = currentPath;
             }
         }
+        //Load the schedule
+        Schedule schedule = FileUtils.LoadSchedule();
+       
+        List<string> itemNames = new List<string>();
+        var seriesData = FileUtils.LoadSeriesData();
+        var seriesDict = new Dictionary<String, List<string>>();
+        foreach (VideoSeries series in seriesData) {
+            List<string> filePathsForSeries = new List<string>();
+            FileUtils.FindAllFilesForPath(ref filePathsForSeries, series.FilePath);
+            seriesDict.Add(series.Name, filePathsForSeries);
+        }
+
+        switch (schedule.scheduleType) {
+            case ScheduleType.SEQUENTIAL:
+                mSaveData = FileUtils.LoadSaveData();
+                for (int i = 0; i < schedule.items.Count; i++) {
+                    mVideoFilePathsFound.Add(seriesDict[schedule.items[i].showName][0]);
+                }
+                break;
+            case ScheduleType.SCHEDULED_BUT_RANDOM_EPISODE:
+                for (int i = 0; i < schedule.items.Count; i++) {
+                    List<string> showsInSchedule = seriesDict[schedule.items[i].showName];
+                    mVideoFilePathsFound.Add(showsInSchedule[UnityEngine.Random.Range(0, showsInSchedule.Count)]);
+                }
+                break;
+            case ScheduleType.RANDOM_FROM_SHOWS:
+                for (int i = 0; i < schedule.items.Count; i++) {
+                    List<string> showsInSchedule = seriesDict[schedule.items[i].showName];
+                    mVideoFilePathsFound.AddRange(showsInSchedule);
+                }
+                RandomizeFilePaths();
+                break;
+            case ScheduleType.DISTRIBUTED_RANDOM:
+                //pick a show at random first, then pick a random episode from the list, repeat X times
+                List<string> keyList = new List<string>(seriesDict.Keys);
+                
+                for (int i = 0; i < 100; i++) {
+                    string randomKey = keyList[UnityEngine.Random.Range(0, keyList.Count)];
+                    List<string> randomEpisodes = seriesDict[randomKey];
+                    if(randomEpisodes.Count == 0) {
+                        continue;
+                    }
+                    string randomEpisode = "";
+                    try {
+                        randomEpisode = randomEpisodes[UnityEngine.Random.Range(0, randomEpisodes.Count)];
+                        mVideoFilePathsFound.Add(randomEpisode);
+                    } catch (Exception e) {
+                        Debug.Log("Series fucked up: " + randomKey);
+                    }
+                    
+                }
+                
+                break;
+            case ScheduleType.HARD_RANDOM:
+            default:
+                foreach (List<string> filePaths in seriesDict.Values) {
+                    mVideoFilePathsFound.AddRange(filePaths);
+                }
+                RandomizeFilePaths();
+                break;
+        }
+
+        for(int i=0; i < mVideoFilePathsFound.Count; i++) {
+            itemNames.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[i]));
+        }
+
         scheduleScript.LoadSchedule(itemNames);
-        ResetToCountdownState(preshowWait);
+    }
+
+    private string GetEpisodeNameFromPath(string fullPath) {
+        int lastSlash = fullPath.LastIndexOf('\\');
+        lastSlash++;
+        int lastDot = fullPath.LastIndexOf('.');
+        return fullPath.Substring(lastSlash, (lastDot - lastSlash));
     }
 
     private void LoadMusic() {
         musicFiles.Clear();
         //TODO pull this out of a JSON file instead of hardcoding it
-        string directoryName = "D:/Music/PTV";
+        string directoryName = mMusicDirectory;
         var info = new DirectoryInfo(directoryName);
         var files = info.GetFiles();
         foreach(FileInfo file in files) {
@@ -94,7 +171,7 @@ public class CountdownScript : MonoBehaviour
 
     private void LoadBumps() {
         musicFiles.Clear();
-        string bumpDirectory = "C:/Users/Jorda/Videos/PTV/Bumps";
+        string bumpDirectory = mBumpDirectory;
         List<string> bumpFileNames = new List<string>();
         FileUtils.FindAllFilesForPath(ref ptvBumpFilePaths, bumpDirectory);
         //var info = new DirectoryInfo(Application.dataPath + "/Resources/Bumps/Random Bumps");
@@ -117,8 +194,9 @@ public class CountdownScript : MonoBehaviour
         int dotIndex = fileName.LastIndexOf(".");
         int fileTypelength = fileName.Length - dotIndex;
         mSongName = fileName.Substring(slashIndex+1, fileName.Length - (slashIndex + fileTypelength+1));
-        //Stream the file in from our loca storage
-        AudioClip clp = new WWW("file:///" + fileName).GetAudioClip(false,true);//Resources.Load<AudioClip>("Music/" + fileName);
+        
+        //Stream the file in from our local storage
+        AudioClip clp = new WWW("file:///" + fileName).GetAudioClip(false,true);
         musicFiles.Add(clp);
         musicFilePaths.RemoveAt(musicIndex);
     }
@@ -155,7 +233,7 @@ public class CountdownScript : MonoBehaviour
         countdownTimer = numSeconds;
         StartCoroutine(DoCountdown());
         NextUpParent.SetActive(false);
-        nextUpVideoTitleText.text = videoFiles[videoIndex].name;
+        nextUpVideoTitleText.text = mVideoFilePathsFound[videoIndex];
     }
 
     public void _OnVolumeSliderChanged(float value) {
@@ -203,7 +281,6 @@ public class CountdownScript : MonoBehaviour
             }
         }
         
-        playbackLogo.gameObject.SetActive(state == eTVState.PLAYBACK);
         if (state == eTVState.PLAYBACK) {
             if (Input.GetKeyDown(KeyCode.X)) {
                 videoPlayer.time = videoPlayer.length - 10;
@@ -213,8 +290,9 @@ public class CountdownScript : MonoBehaviour
             if (playbackStarted) {
                 if (!videoPlayer.isPlaying) {
                     //Stop the subtitles
-                    StopSubtitles();
-                    if (videoIndex >= videoFiles.Count) {
+                    //StopSubtitles();
+                    playbackLogo.gameObject.SetActive(false);
+                    if (videoIndex >= mVideoFilePathsFound.Count) {
                         videoIndex = 0;
                         ResetToEndOfStreamState();
                     } else {
@@ -372,17 +450,56 @@ public class CountdownScript : MonoBehaviour
 
     void OnLogoPrerollComplete() {
         mQueuedPostLogoAction = null;
+        StartContentPlayback();
+    }
+
+    private string mCurrentShowText = "";
+    private string mNextShowText = "";
+    void StartContentPlayback() {
         videoPlayer.Stop();
         //Start the subtitles
-        StartSubtitles(subFiles[videoIndex]);
-        
+        //StartSubtitles(subFiles[videoIndex]);
+        playbackLogo.gameObject.SetActive(true);
         videoPlayer.clip = null;
-        videoPlayer.url = mVideoFilePathsFound[0];
+        mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        videoPlayer.url = mVideoFilePathsFound[videoIndex++];
+        if(videoIndex < mVideoFilePathsFound.Count) {
+            mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        } else {
+            mNextShowText = "End of schedule";
+        }
         // videoPlayer.clip = videoFiles[videoIndex++];
         videoPlayer.enabled = true;
         videoPlayer.Play();
         //This has to be called after the call to viddyP.play
         state = eTVState.PLAYBACK;
+        StartCoroutine(StartReminderTextCountdown());
+    }
+
+    private IEnumerator StartReminderTextCountdown() {
+        yield return new WaitForSeconds(300);
+        if(state == eTVState.PLAYBACK) {
+            playbackLogo.gameObject.SetActive(false);
+            reminderText.gameObject.SetActive(true);
+            string currentShowText = mCurrentShowText;
+            reminderText.text = "You're watching\n" + currentShowText;
+            yield return new WaitForSeconds(15);
+            int counter = 0;
+            
+            do {
+                int remainingTime = (int)(videoPlayer.length - videoPlayer.time);
+                string formattedTime = "";
+                int minutes = remainingTime / 60;
+                int seconds = remainingTime % 60;
+                formattedTime = minutes.ToString() + ":" + seconds.ToString();
+                reminderText.text = "Next up:\n" +mNextShowText + "\nin: " + formattedTime.ToString();
+                yield return new WaitForSeconds(1);
+                counter++;
+            } while (counter < 15);
+            reminderText.gameObject.SetActive(false);
+            playbackLogo.gameObject.SetActive(state == eTVState.PLAYBACK);
+            StartCoroutine(StartReminderTextCountdown());
+        }
     }
 
     void OnLogoPostRollComplete() {

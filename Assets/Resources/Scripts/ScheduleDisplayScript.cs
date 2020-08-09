@@ -11,6 +11,7 @@ public class ScheduleDisplayScript : MonoBehaviour
     int index = 0;
     List<string> scheduleObjects;
     List<GameObject> instantiatedScheduleObjects = new List<GameObject>();
+    private const int mNumScheduleItemsToDisplay = 3;
 
     public void LoadSchedule(List<string> displaySchedule) {
         index = 0;
@@ -20,7 +21,7 @@ public class ScheduleDisplayScript : MonoBehaviour
         }
         instantiatedScheduleObjects.Clear();
 
-        int maxLoop = 3;
+        int maxLoop = mNumScheduleItemsToDisplay;
         if(displaySchedule.Count < maxLoop) {
             maxLoop = displaySchedule.Count;
         }

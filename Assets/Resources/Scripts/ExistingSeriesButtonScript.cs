@@ -6,10 +6,10 @@ using UnityEngine.UI;
 public class ExistingSeriesButtonScript : MonoBehaviour
 {
     VideoSeries mSeriesData;
-    OpenFileDialogScript.OnVideoSeriesSelected mClickCallbackDelegate;
+    DisplaySeriesScript.OnVideoSeriesSelected mClickCallbackDelegate;
     public Text ButtonText;
 
-    public void setup(VideoSeries seriesData, OpenFileDialogScript.OnVideoSeriesSelected clickCallback) {
+    public void setup(VideoSeries seriesData, DisplaySeriesScript.OnVideoSeriesSelected clickCallback) {
         mSeriesData = seriesData;
         mClickCallbackDelegate = clickCallback;
         ButtonText.text = seriesData.Name;
@@ -19,5 +19,9 @@ public class ExistingSeriesButtonScript : MonoBehaviour
         if(mClickCallbackDelegate != null) {
             mClickCallbackDelegate(mSeriesData);
         }
+    }
+
+    public string GetSeriesName() {
+        return mSeriesData.Name;
     }
 }

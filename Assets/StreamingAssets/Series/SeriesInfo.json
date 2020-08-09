@@ -3,32 +3,168 @@
         {
             "Name": "Jackie Chan Adventures",
             "FilePath": "D:/Videos/TV/JACKIE CHAN Adventures (2000-2005) - The Complete TV Series, Season 1,2,3,4,5 S01-S05 - 480p Web-DL x264",
-            "LastWatchedSeason": 1,
-            "LastWatchedEpisode": 1
+            "Tags": [
+                "Cartoon​"
+            ]
         },
         {
             "Name": "Batman Beyond",
             "FilePath": "D:/Videos/TV/Batman Beyond",
-            "LastWatchedSeason": 1,
-            "LastWatchedEpisode": 1
+            "Tags": [
+                "DC​",
+                "Superhero​"
+            ]
         },
         {
             "Name": "Medabots",
             "FilePath": "D:/Videos/TV/Medabots (English Dub)",
-            "LastWatchedSeason": 1,
-            "LastWatchedEpisode": 1
+            "Tags": [
+                "Mecha​"
+            ]
         },
         {
             "Name": "Outlaw Star",
             "FilePath": "D:/Videos/Anime/Outlaw Star",
-            "LastWatchedSeason": 1,
-            "LastWatchedEpisode": 1
+            "Tags": [
+                "Anime​"
+            ]
         },
         {
             "Name": "Gargoyles",
             "FilePath": "D:/Videos/TV/Gargoyles - 3 seasons Complete",
-            "LastWatchedSeason": 1,
-            "LastWatchedEpisode": 1
+            "Tags": []
+        },
+        {
+            "Name": "Megas XLR",
+            "FilePath": "D:/Videos/TV/Megas XLR/Megas XLR",
+            "Tags": [
+                "Mecha​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Men In Black",
+            "FilePath": "D:/Videos/TV/Men In Black - Complete Series",
+            "Tags": []
+        },
+        {
+            "Name": "Billy And Mandy",
+            "FilePath": "D:/Videos/TV/Grim Adventures of Billy and Mandy, The - Seasons 1-7 + Extras/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Big O",
+            "FilePath": "D:/Videos/TV/The Big O",
+            "Tags": [
+                "Mecha​",
+                "Anime​",
+                "Superhero​"
+            ]
+        },
+        {
+            "Name": "Ed Edd & Eddy",
+            "FilePath": "D:/Videos/TV/Ed Edd n Eddy",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Dexter's Lab",
+            "FilePath": "D:/Videos/TV/DEXTERS LAB[SEASONS 1-5][VERIFIED-VIDZ]",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "90s X-men",
+            "FilePath": "D:/Videos/TV/X-Men Cartoon Complete Seasons 1-5",
+            "Tags": [
+                "Superhero​",
+                "Marvel​"
+            ]
+        },
+        {
+            "Name": "Samurai Jack",
+            "FilePath": "D:/Videos/TV/Samurai Jack/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Harvey Birdman",
+            "FilePath": "D:/Videos/TV/Harvey.Birdman.Attorney.At.Law.Complete.720P.WEB-DL.Retic1337",
+            "Tags": [
+                "Comedy​"
+            ]
+        },
+        {
+            "Name": "Daria",
+            "FilePath": "D:/Videos/TV/Daria",
+            "Tags": [
+                "ME_IRL​",
+                "Comedy​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Freakazoid",
+            "FilePath": "D:/Videos/TV/Freakazoid!",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Animaniacs",
+            "FilePath": "D:/Videos/TV/Animaniacs/Animaniacs (1993)",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Tiny Toon Adventures",
+            "FilePath": "D:/Videos/TV/Tiny Toon Adventures (1990)",
+            "Tags": [
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Dilbert",
+            "FilePath": "D:/Videos/TV/Dilbert",
+            "Tags": [
+                "Comedy​",
+                "ME_IRL​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Adventure Time",
+            "FilePath": "D:/Videos/TV/Adventure Time/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​",
+                "Minisode​"
+            ]
+        },
+        {
+            "Name": "PowerPuff Girls",
+            "FilePath": "D:/Videos/TV/THE POWER PUFF GIRLS [COMPLETE][VERIFIED-VIDZ]/Seasons",
+            "Tags": [
+                "Minisode​",
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
         }
     ]
 }
