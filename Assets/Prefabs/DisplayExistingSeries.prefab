@@ -169,7 +169,7 @@ GameObject:
   - component: {fileID: 4248070042294442298}
   - component: {fileID: 4248070042294442299}
   m_Layer: 5
-  m_Name: Existing Entries
+  m_Name: DisplayExistingSeries
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -305,5 +305,5 @@ MonoBehaviour:
   m_StartAxis: 0
   m_CellSize: {x: 100, y: 25}
   m_Spacing: {x: 0, y: 0}
-  m_Constraint: 0
+  m_Constraint: 1
   m_ConstraintCount: 2

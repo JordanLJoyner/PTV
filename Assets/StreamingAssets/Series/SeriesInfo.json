@@ -165,6 +165,89 @@
                 "Episodic​",
                 "Cartoon​"
             ]
+        },
+        {
+            "Name": "Invader Zim",
+            "FilePath": "D:/Videos/TV/Invader Zim DVD-RIPs by sNeK",
+            "Tags": [
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Teen Titans",
+            "FilePath": "D:/Videos/TV/Titans",
+            "Tags": [
+                "Superhero​",
+                "DC​",
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Courage the Cowardly Dog",
+            "FilePath": "D:/Videos/TV/Courage.The.Cowardly.Dog.S01 - S04.WEB-DL.AAC2.0.H264-Reaperza",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Twilight Zone",
+            "FilePath": "D:/Videos/TV/The Twilight Zone Complete 156 Episodes XVID",
+            "Tags": [
+                "Live Action​"
+            ]
+        },
+        {
+            "Name": "Chowder",
+            "FilePath": "D:/Videos/TV/Chowder - The complete series",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Escaflowne",
+            "FilePath": "D:/Videos/TV/[AHQ] Vision of Escaflowne 1-26+movie",
+            "Tags": [
+                "Anime​",
+                "Mecha​"
+            ]
+        },
+        {
+            "Name": "Donkey Kong Country",
+            "FilePath": "D:/Videos/TV/DonkeyKongCountryAnimatedTVSeries",
+            "Tags": [
+                "CGI​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Transformers Beast Wars",
+            "FilePath": "D:/Videos/TV/Transformers Beast Wars",
+            "Tags": [
+                "CGI​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Duck Dodgers",
+            "FilePath": "D:/Videos/TV/Duck Dodgers",
+            "Tags": [
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Duckman",
+            "FilePath": "D:/Videos/TV/ DuckMan",
+            "Tags": [
+                "Cartoon​",
+                "Comedy​",
+                "ME_IRL​"
+            ]
         }
     ]
 }

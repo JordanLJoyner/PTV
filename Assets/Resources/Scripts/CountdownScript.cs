@@ -24,8 +24,9 @@ public class CountdownScript : MonoBehaviour
     public Slider volumeSlider;
     public SubtitleDisplayer subtitleDisplayer;
     public TextMeshProUGUI reminderText;
+    public TextMeshProUGUI EventText;
+    public UIParticleSystem uiParticleSystem;
 
-    public List<TextAsset> subFiles;
     private List<AudioClip> musicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
     private List<string> ptvBumpFilePaths = new List<string>();    
@@ -35,7 +36,7 @@ public class CountdownScript : MonoBehaviour
     private bool firedAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
     private const string mMusicDirectory = "D:/Music/PTV";
-    private const string mBumpDirectory = "C:/Users/Jorda/Videos/PTV/Bumps";
+    private const string mBumpDirectory = "D:/PTV/Bumps";
 
     private enum eTVState {
         UNSET,
@@ -49,7 +50,7 @@ public class CountdownScript : MonoBehaviour
     private bool playbackStarted = false;
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
-    private int preshowWait = 15;
+    private int preshowWait = 80;
     private int mMidShowWait = 180;
     private float mMaxVolume = 1.0f;
     private string mSongName;
@@ -65,6 +66,7 @@ public class CountdownScript : MonoBehaviour
         LoadBumps();
         LoadVideos();
         ResetToCountdownState(preshowWait);
+        
     }
 
     private void LoadVideos() {
@@ -142,7 +144,7 @@ public class CountdownScript : MonoBehaviour
         for(int i=0; i < mVideoFilePathsFound.Count; i++) {
             itemNames.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[i]));
         }
-
+        UpdateCurrentShowText();
         scheduleScript.LoadSchedule(itemNames);
     }
 
@@ -194,7 +196,8 @@ public class CountdownScript : MonoBehaviour
         int dotIndex = fileName.LastIndexOf(".");
         int fileTypelength = fileName.Length - dotIndex;
         mSongName = fileName.Substring(slashIndex+1, fileName.Length - (slashIndex + fileTypelength+1));
-        
+        StartCoroutine(RESTApiTest.UpdateSongOnServer(mSongName));
+
         //Stream the file in from our local storage
         AudioClip clp = new WWW("file:///" + fileName).GetAudioClip(false,true);
         musicFiles.Add(clp);
@@ -243,8 +246,26 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    private string timeUntilNextEvent() {
+        DateTime now = DateTime.Now;
+        int hours = 0, minutes = 0, seconds = 0, totalSeconds = 0;
+        hours = (24 - now.Hour) - 1;
+        minutes = (60 - now.Minute) - 1;
+        seconds = (60 - now.Second - 1);
+
+        totalSeconds = seconds + (minutes * 60) + (hours * 3600);
+        string returnVal = "Midnight in ";
+        if(hours > 0) {
+            returnVal += hours.ToString() + ":";
+        }
+        if(minutes > 0) {
+            returnVal += minutes.ToString();
+        }
+        return returnVal;
+    }
+
     private void Update() {
-        if(state == eTVState.COUNTDOWN) {
+        if (state == eTVState.COUNTDOWN) {
             if (!musicPlayer.isPlaying) {
                 PlayNextMusicClip();
             }
@@ -263,6 +284,7 @@ public class CountdownScript : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.V)) {
                 volumeSlider.gameObject.SetActive(!volumeSlider.gameObject.activeSelf);
+                //VetoNextShow();
             }
         } else {
             volumeSlider.gameObject.SetActive(false);
@@ -283,21 +305,13 @@ public class CountdownScript : MonoBehaviour
         
         if (state == eTVState.PLAYBACK) {
             if (Input.GetKeyDown(KeyCode.X)) {
-                videoPlayer.time = videoPlayer.length - 10;
+                SkipToEndOfPlayback();
             }
 
             //Video just ended
             if (playbackStarted) {
                 if (!videoPlayer.isPlaying) {
-                    //Stop the subtitles
-                    //StopSubtitles();
-                    playbackLogo.gameObject.SetActive(false);
-                    if (videoIndex >= mVideoFilePathsFound.Count) {
-                        videoIndex = 0;
-                        ResetToEndOfStreamState();
-                    } else {
-                        PlayBumpAndLogo(OnLogoPostRollComplete);
-                    }
+                    CompletedShowPlayback();
                 }
             }
 
@@ -410,6 +424,9 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    //****************
+    //BUMP
+    //****************
     void PlayPrerollBump() {
         NextUpParent.SetActive(false);
         videoPlayer.enabled = true;
@@ -452,18 +469,27 @@ public class CountdownScript : MonoBehaviour
         mQueuedPostLogoAction = null;
         StartContentPlayback();
     }
+    //****************
+    //END BUMP
+    //****************
 
+    //****************
+    //PLAYBACK
+    //****************
     private string mCurrentShowText = "";
     private string mNextShowText = "";
+    //#StartVideoPlayback
+    //#Video Playback
     void StartContentPlayback() {
         videoPlayer.Stop();
         //Start the subtitles
         //StartSubtitles(subFiles[videoIndex]);
         playbackLogo.gameObject.SetActive(true);
         videoPlayer.clip = null;
-        mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        UpdateCurrentShowText();
         videoPlayer.url = mVideoFilePathsFound[videoIndex++];
-        if(videoIndex < mVideoFilePathsFound.Count) {
+        StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
+        if (videoIndex < mVideoFilePathsFound.Count) {
             mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
         } else {
             mNextShowText = "End of schedule";
@@ -474,6 +500,30 @@ public class CountdownScript : MonoBehaviour
         //This has to be called after the call to viddyP.play
         state = eTVState.PLAYBACK;
         StartCoroutine(StartReminderTextCountdown());
+    }
+
+    //StopVideoPlayback
+    //StopShowPlayback
+    private void CompletedShowPlayback() {
+        //Stop the subtitles
+        //StopSubtitles();
+        StartCoroutine(RESTApiTest.UpdateShowOnServer(mNextShowText));
+        playbackLogo.gameObject.SetActive(false);
+        if (videoIndex >= mVideoFilePathsFound.Count) {
+            videoIndex = 0;
+            ResetToEndOfStreamState();
+        } else {
+            PlayBumpAndLogo(OnLogoPostRollComplete);
+        }
+    }
+
+    //****************
+    //END PLAYBACK
+    //****************
+
+    private void VideoPlayer_prepareCompleted(VideoPlayer source) {
+        double videoLength = source.length;
+        Debug.Log(videoPlayer.url + " is " + videoLength.ToString() + " seconds ");
     }
 
     private IEnumerator StartReminderTextCountdown() {
@@ -521,4 +571,63 @@ public class CountdownScript : MonoBehaviour
         subtitleDisplayer.StopSubs();
         subtitleDisplayer.gameObject.SetActive(false);
     }
+
+    private void UpdateCurrentShowText() {
+        mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
+        List<string> upcomingShows = new List<string>();
+        for(int i=0; i < 5; i++) {
+            if(videoIndex + i < mVideoFilePathsFound.Count) {
+                upcomingShows.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex + i]));
+            }
+        }
+        StartCoroutine(RESTApiTest.UpdateScheduleOnServer(upcomingShows));
+    }
+
+    private void SkipToEndOfPlayback() {
+        if (state== eTVState.PLAYBACK) {
+            videoPlayer.time = videoPlayer.length - 10;
+        }
+    }
+
+    private void VetoNextShow() {
+        if(state != eTVState.COUNTDOWN) {
+            return;
+        }
+        scheduleScript.AdvanceSchedule();
+        videoIndex++;
+        UpdateCurrentShowText();
+    }
+
+    //****************
+    //API RESPONSES
+    //****************
+    public void OnSkipRequestedFromServer() {
+        SkipToEndOfPlayback();
+    }
+
+    public void OnVetoRequestedFromServer() {
+        VetoNextShow();
+    }
+
+    public void OnEmoteRequested() {
+        if(uiParticleSystem != null && !uiParticleSystem.IsPlaying) {
+            uiParticleSystem.Play();
+        }
+    }
+
+    public void OnInitialServerConnection() {
+        //Send a song, show, and schedule notification to the server so the API works right
+        StartCoroutine(RESTApiTest.UpdateSongOnServer(mSongName));
+        StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
+    }
+
+    //TODO find a spot to call this, onDisable, onDestroy doesn't work
+    public void OnStreamShutdown() {
+        StartCoroutine(RESTApiTest.UpdateSongOnServer("No Active Stream"));
+        StartCoroutine(RESTApiTest.UpdateShowOnServer("No Active Stream"));
+    }
+    //****************
+    //END API RESPONSES
+    //****************
 }

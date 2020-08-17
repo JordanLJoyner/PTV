@@ -36,6 +36,7 @@ public class Networkcon : MonoBehaviour {
         }
         throw new System.Exception("No network adapters with an IPv4 address in the system!");
     }
+
     void GetInfo() {
         localAdd = IPAddress.Parse(connectionIP);
         listener = new TcpListener(IPAddress.Any, connectionPort);
@@ -62,7 +63,7 @@ public class Networkcon : MonoBehaviour {
             if (dataReceived == "stop") {
                 running = false;
             } else {
-                pos = 10f * StringToVector3(dataReceived);
+                //pos = 10f * StringToVector3(dataReceived);
 
                 print("moved");
                 nwStream.Write(buffer, 0, bytesRead);
