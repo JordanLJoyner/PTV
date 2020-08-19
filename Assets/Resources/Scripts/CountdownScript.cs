@@ -58,7 +58,7 @@ public class CountdownScript : MonoBehaviour
     private string mFilesFound = "";
     private List<string> mVideoFilePathsFound = new List<string>();
     private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
-
+    Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     // Start is called before the first frame update
     void Start() {
         streamOverText.enabled = false;
@@ -82,42 +82,40 @@ public class CountdownScript : MonoBehaviour
         //Load the schedule
         Schedule schedule = FileUtils.LoadSchedule();
        
-        List<string> itemNames = new List<string>();
         var seriesData = FileUtils.LoadSeriesData();
-        var seriesDict = new Dictionary<String, List<string>>();
         foreach (VideoSeries series in seriesData) {
             List<string> filePathsForSeries = new List<string>();
             FileUtils.FindAllFilesForPath(ref filePathsForSeries, series.FilePath);
-            seriesDict.Add(series.Name, filePathsForSeries);
+            mSeriesDict.Add(series.Name, filePathsForSeries);
         }
 
         switch (schedule.scheduleType) {
             case ScheduleType.SEQUENTIAL:
                 mSaveData = FileUtils.LoadSaveData();
                 for (int i = 0; i < schedule.items.Count; i++) {
-                    mVideoFilePathsFound.Add(seriesDict[schedule.items[i].showName][0]);
+                    mVideoFilePathsFound.Add(mSeriesDict[schedule.items[i].showName][0]);
                 }
                 break;
             case ScheduleType.SCHEDULED_BUT_RANDOM_EPISODE:
                 for (int i = 0; i < schedule.items.Count; i++) {
-                    List<string> showsInSchedule = seriesDict[schedule.items[i].showName];
+                    List<string> showsInSchedule = mSeriesDict[schedule.items[i].showName];
                     mVideoFilePathsFound.Add(showsInSchedule[UnityEngine.Random.Range(0, showsInSchedule.Count)]);
                 }
                 break;
             case ScheduleType.RANDOM_FROM_SHOWS:
                 for (int i = 0; i < schedule.items.Count; i++) {
-                    List<string> showsInSchedule = seriesDict[schedule.items[i].showName];
+                    List<string> showsInSchedule = mSeriesDict[schedule.items[i].showName];
                     mVideoFilePathsFound.AddRange(showsInSchedule);
                 }
                 RandomizeFilePaths();
                 break;
             case ScheduleType.DISTRIBUTED_RANDOM:
                 //pick a show at random first, then pick a random episode from the list, repeat X times
-                List<string> keyList = new List<string>(seriesDict.Keys);
+                List<string> keyList = new List<string>(mSeriesDict.Keys);
                 
                 for (int i = 0; i < 100; i++) {
                     string randomKey = keyList[UnityEngine.Random.Range(0, keyList.Count)];
-                    List<string> randomEpisodes = seriesDict[randomKey];
+                    List<string> randomEpisodes = mSeriesDict[randomKey];
                     if(randomEpisodes.Count == 0) {
                         continue;
                     }
@@ -134,17 +132,23 @@ public class CountdownScript : MonoBehaviour
                 break;
             case ScheduleType.HARD_RANDOM:
             default:
-                foreach (List<string> filePaths in seriesDict.Values) {
+                foreach (List<string> filePaths in mSeriesDict.Values) {
                     mVideoFilePathsFound.AddRange(filePaths);
                 }
                 RandomizeFilePaths();
                 break;
         }
 
-        for(int i=0; i < mVideoFilePathsFound.Count; i++) {
+        UpdateCurrentShowText();
+        UpdateScheduleScript();
+    }
+
+    private void UpdateScheduleScript() {
+        List<string> itemNames = new List<string>();
+
+        for (int i = 0; i < mVideoFilePathsFound.Count; i++) {
             itemNames.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[i]));
         }
-        UpdateCurrentShowText();
         scheduleScript.LoadSchedule(itemNames);
     }
 
@@ -160,6 +164,10 @@ public class CountdownScript : MonoBehaviour
         //TODO pull this out of a JSON file instead of hardcoding it
         string directoryName = mMusicDirectory;
         var info = new DirectoryInfo(directoryName);
+        if (!info.Exists) {
+            Debug.LogError("No music directory found");
+            return;
+        }
         var files = info.GetFiles();
         foreach(FileInfo file in files) {
             if (!file.Name.Contains(".meta") && file.Name.Contains(".ogg")) {
@@ -175,6 +183,11 @@ public class CountdownScript : MonoBehaviour
         musicFiles.Clear();
         string bumpDirectory = mBumpDirectory;
         List<string> bumpFileNames = new List<string>();
+        var info = new DirectoryInfo(bumpDirectory);
+        if (!info.Exists) {
+            Debug.LogError("No bump directory found");
+            return;
+        }
         FileUtils.FindAllFilesForPath(ref ptvBumpFilePaths, bumpDirectory);
         //var info = new DirectoryInfo(Application.dataPath + "/Resources/Bumps/Random Bumps");
         //var files = info.GetFiles();
@@ -572,11 +585,20 @@ public class CountdownScript : MonoBehaviour
         subtitleDisplayer.gameObject.SetActive(false);
     }
 
+    private const int mServerScheduleLength = 5;
     private void UpdateCurrentShowText() {
+        if(videoIndex < 0) {
+            Debug.LogError("Video index was still set to 0, did we load videos right?");
+            return;
+        }
         mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
         StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
         List<string> upcomingShows = new List<string>();
-        for(int i=0; i < 5; i++) {
+        for(int i=0; i < mServerScheduleLength; i++) {
+            if(videoIndex + i > mVideoFilePathsFound.Count) {
+                continue;
+            }
+
             if(videoIndex + i < mVideoFilePathsFound.Count) {
                 upcomingShows.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex + i]));
             }
@@ -626,6 +648,25 @@ public class CountdownScript : MonoBehaviour
     public void OnStreamShutdown() {
         StartCoroutine(RESTApiTest.UpdateSongOnServer("No Active Stream"));
         StartCoroutine(RESTApiTest.UpdateShowOnServer("No Active Stream"));
+    }
+
+    public void OnRequestRequestedFromServer(string seriesName) {
+        if(state == eTVState.COUNTDOWN) {
+            if (mSeriesDict.ContainsKey(seriesName)) {
+                //Pull a random episode from the series
+                var showFilePaths = mSeriesDict[seriesName];
+                var randomEpisode = showFilePaths[UnityEngine.Random.Range(0, showFilePaths.Count)];
+                mVideoFilePathsFound.Insert(videoIndex,randomEpisode);
+                UpdateCurrentShowText();
+                UpdateScheduleScript();
+                //TODO actually remove any other instance of this episode
+            } else {
+                Debug.LogError("Tried to pull a series that doesn't exist");
+            }     
+            
+        } else {
+            Debug.Log("Tried to request a show outside of countdown state");
+        }
     }
     //****************
     //END API RESPONSES

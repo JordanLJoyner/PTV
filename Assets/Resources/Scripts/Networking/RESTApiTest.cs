@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 [Serializable]
 public class ServerMessage {
     public string MessageType;
+    public string Data;
 }
 
 [Serializable]
@@ -23,22 +24,26 @@ public class RESTApiTest : MonoBehaviour {
     void Start() {
         var seriesData = FileUtils.LoadSeriesData();
         var seriesDict = new Dictionary<String, List<string>>();
+        string seriesString = "";
+
         foreach (VideoSeries series in seriesData) {
             List<string> filePathsForSeries = new List<string>();
             FileUtils.FindAllFilesForPath(ref filePathsForSeries, series.FilePath);
             seriesDict.Add(series.Name, filePathsForSeries);
+            seriesString += series.Name + '\n';
         }
-
-        StartCoroutine(Upload());
+        
+        StartCoroutine(UpdateOnServer("http://127.0.0.1:5000/PTV/series/","series_list", seriesString));
         StartCoroutine(StartRequestingMessageQueue());
     }
 
+    /*
     IEnumerator Upload() {
         WWWForm form = new WWWForm();
         var seriesData = FileUtils.LoadSeriesData();
         form.AddField("series_list", JsonHelper.ToJson<VideoSeries>(seriesData));
 
-        using (UnityWebRequest www = UnityWebRequest.Post("http://127.0.0.1:5000/series/", form)) {
+        using (UnityWebRequest www = UnityWebRequest.Post(, form)) {
             yield return www.SendWebRequest();
 
             if (www.isNetworkError || www.isHttpError) {
@@ -47,7 +52,7 @@ public class RESTApiTest : MonoBehaviour {
                 Debug.Log("Form upload complete!");
             }
         }
-    }
+    }*/
 
     private static IEnumerator UpdateOnServer(string endPoint, string fieldName, string value) {
         WWWForm form = new WWWForm();
@@ -58,7 +63,7 @@ public class RESTApiTest : MonoBehaviour {
             yield return www.SendWebRequest();
 
             if (www.isNetworkError || www.isHttpError) {
-                Debug.Log(www.error);
+                Debug.Log(www.error + " for " + endPoint);
             } else {
                 //Debug.Log("Form upload complete!");
             }
@@ -135,6 +140,9 @@ public class RESTApiTest : MonoBehaviour {
                    break;
                 case "EMOTE_WTF":
                     countdownScript.OnEmoteRequested();
+                    break;
+                case "REQUEST":
+                    countdownScript.OnRequestRequestedFromServer(serverMessages.values[i].Data);
                     break;
                 default:
                     break;

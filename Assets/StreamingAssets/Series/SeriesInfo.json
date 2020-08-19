@@ -248,6 +248,39 @@
                 "Comedy​",
                 "ME_IRL​"
             ]
+        },
+        {
+            "Name": "Aladdin Series",
+            "FilePath": "D:/Videos/TV/Aladdin Complete Series",
+            "Tags": [
+                "Cartoon​",
+                "Disney​"
+            ]
+        },
+        {
+            "Name": "Digimon",
+            "FilePath": "D:/Videos/TV/Digimon",
+            "Tags": [
+                "Cartoon​",
+                "Anime​"
+            ]
+        },
+        {
+            "Name": "Hercules",
+            "FilePath": "D:/Videos/TV/Disney's Hercules 1998 Season 1 Complete WEB x264 [i_c]",
+            "Tags": [
+                "Disney​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Venture Brothers",
+            "FilePath": "D:/Videos/TV/The Venture Bros. (Seasons 1-6 +Commentary) [480p] [DVD] [1080p] [BD] [HEVC] [x265] [Batch] [pseudo]",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
         }
     ]
 }

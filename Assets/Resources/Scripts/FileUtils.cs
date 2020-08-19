@@ -62,6 +62,10 @@ public class FileUtils {
 
     public static void FindAllFilesForPath(ref List<string> filePathsFound, string path) {
         var info = new DirectoryInfo(path);
+        if (!info.Exists) {
+            Debug.LogError("File path " + path + " not found");
+            return;
+        }
         var directories = info.GetDirectories();
         foreach (var directory in directories) {
             FindAllFilesForPath(ref filePathsFound, directory.FullName);
