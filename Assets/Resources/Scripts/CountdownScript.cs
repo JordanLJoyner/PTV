@@ -30,10 +30,10 @@ public class CountdownScript : MonoBehaviour
     private List<AudioClip> musicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
     private List<string> ptvBumpFilePaths = new List<string>();    
-    private int videoIndex = 0;
-    private int countdownTimer = 0;
-    private int musicIndex = 0;
-    private bool firedAlmostComplete = false;
+    private int mVideoIndex = 0;
+    private int mCountdownTimer = 0;
+    private int mMusicIndex = 0;
+    private bool mFiredAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
     private const string mMusicDirectory = "D:/Music/PTV";
     private const string mBumpDirectory = "D:/PTV/Bumps";
@@ -51,7 +51,7 @@ public class CountdownScript : MonoBehaviour
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
     private int preshowWait = 80;
-    private int mMidShowWait = 180;
+    private int mTimeBetweenShowWait = 180;
     private float mMaxVolume = 1.0f;
     private string mSongName;
 
@@ -61,12 +61,13 @@ public class CountdownScript : MonoBehaviour
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     // Start is called before the first frame update
     void Start() {
+        UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
         streamOverText.enabled = false;
         LoadMusic();
         LoadBumps();
         LoadVideos();
         ResetToCountdownState(preshowWait);
-        
+        StartCoroutine(StartServerTimeCountdown());
     }
 
     private void LoadVideos() {
@@ -138,7 +139,7 @@ public class CountdownScript : MonoBehaviour
                 RandomizeFilePaths();
                 break;
         }
-
+        mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex]);
         UpdateCurrentShowText();
         UpdateScheduleScript();
     }
@@ -203,8 +204,8 @@ public class CountdownScript : MonoBehaviour
             mLoadedAllMusicTracks = true;
             return;
         }
-        musicIndex = UnityEngine.Random.Range(0, musicFilePaths.Count);
-        string fileName = musicFilePaths[musicIndex];
+        mMusicIndex = UnityEngine.Random.Range(0, musicFilePaths.Count);
+        string fileName = musicFilePaths[mMusicIndex];
         int slashIndex = fileName.LastIndexOf("/");
         int dotIndex = fileName.LastIndexOf(".");
         int fileTypelength = fileName.Length - dotIndex;
@@ -214,7 +215,7 @@ public class CountdownScript : MonoBehaviour
         //Stream the file in from our local storage
         AudioClip clp = new WWW("file:///" + fileName).GetAudioClip(false,true);
         musicFiles.Add(clp);
-        musicFilePaths.RemoveAt(musicIndex);
+        musicFilePaths.RemoveAt(mMusicIndex);
     }
 
     void PlayNextMusicClip() {
@@ -246,10 +247,10 @@ public class CountdownScript : MonoBehaviour
     public void StartCountdown(int numSeconds) {
         state = eTVState.COUNTDOWN;
         VisualizerParent.SetActive(true);
-        countdownTimer = numSeconds;
+        mCountdownTimer = numSeconds;
         StartCoroutine(DoCountdown());
         NextUpParent.SetActive(false);
-        nextUpVideoTitleText.text = mVideoFilePathsFound[videoIndex];
+        nextUpVideoTitleText.text = mVideoFilePathsFound[mVideoIndex];
     }
 
     public void _OnVolumeSliderChanged(float value) {
@@ -288,7 +289,7 @@ public class CountdownScript : MonoBehaviour
             }
 
             if (Input.GetKeyDown(KeyCode.S)) {
-                countdownTimer = 13;
+                mCountdownTimer = 13;
             }
 
             if (Input.GetKeyDown(KeyCode.X)) {
@@ -296,8 +297,8 @@ public class CountdownScript : MonoBehaviour
             }
 
             if (Input.GetKeyDown(KeyCode.V)) {
-                volumeSlider.gameObject.SetActive(!volumeSlider.gameObject.activeSelf);
-                //VetoNextShow();
+                //volumeSlider.gameObject.SetActive(!volumeSlider.gameObject.activeSelf);
+                VetoNextShow();
             }
         } else {
             volumeSlider.gameObject.SetActive(false);
@@ -337,7 +338,7 @@ public class CountdownScript : MonoBehaviour
     void ResetToCountdownState(int countdownLength) {
         scheduleScript.ShowSchedule();
         playbackStarted = false;
-        firedAlmostComplete = false;
+        mFiredAlmostComplete = false;
         videoPlayer.enabled = false;
         //Fade in the scrim
         StartCoroutine(TriggerScrimFadeIn());
@@ -350,7 +351,7 @@ public class CountdownScript : MonoBehaviour
 
     void ResetToEndOfStreamState() {
         playbackStarted = false;
-        firedAlmostComplete = false;
+        mFiredAlmostComplete = false;
         //Fade the music in
         StartCoroutine(FadeInMusic());
         songTitleText.enabled = true;
@@ -358,17 +359,17 @@ public class CountdownScript : MonoBehaviour
     }
 
     private IEnumerator DoCountdown() {
-        while (countdownTimer > 0) {
-            string timerText = (countdownTimer / 60).ToString() + ":";
-            if(countdownTimer % 60 < 10) {
+        while (mCountdownTimer > 0) {
+            string timerText = (mCountdownTimer / 60).ToString() + ":";
+            if(mCountdownTimer % 60 < 10) {
                 timerText += "0";
             }
-            timerText += (countdownTimer % 60).ToString();
+            timerText += (mCountdownTimer % 60).ToString();
             countdownText.text = timerText;
             yield return new WaitForSeconds(1);
-            countdownTimer--;
-            if(countdownTimer < 10 && firedAlmostComplete == false) {
-                firedAlmostComplete = true;
+            mCountdownTimer--;
+            if(mCountdownTimer < 10 && mFiredAlmostComplete == false) {
+                mFiredAlmostComplete = true;
                 OnCountdownAlmostComplete();
             }
         }
@@ -491,8 +492,11 @@ public class CountdownScript : MonoBehaviour
     //****************
     private string mCurrentShowText = "";
     private string mNextShowText = "";
+    private IEnumerator mServerTimeEnumerator;
+
     //#StartVideoPlayback
     //#Video Playback
+    //#Playback
     void StartContentPlayback() {
         videoPlayer.Stop();
         //Start the subtitles
@@ -500,10 +504,10 @@ public class CountdownScript : MonoBehaviour
         playbackLogo.gameObject.SetActive(true);
         videoPlayer.clip = null;
         UpdateCurrentShowText();
-        videoPlayer.url = mVideoFilePathsFound[videoIndex++];
+        videoPlayer.url = mVideoFilePathsFound[mVideoIndex++];
         StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
-        if (videoIndex < mVideoFilePathsFound.Count) {
-            mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        if (mVideoIndex < mVideoFilePathsFound.Count) {
+            mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex]);
         } else {
             mNextShowText = "End of schedule";
         }
@@ -513,8 +517,9 @@ public class CountdownScript : MonoBehaviour
         //This has to be called after the call to viddyP.play
         state = eTVState.PLAYBACK;
         StartCoroutine(StartReminderTextCountdown());
+        UpdateTimeOnServer();
     }
-
+    
     //StopVideoPlayback
     //StopShowPlayback
     private void CompletedShowPlayback() {
@@ -522,11 +527,46 @@ public class CountdownScript : MonoBehaviour
         //StopSubtitles();
         StartCoroutine(RESTApiTest.UpdateShowOnServer(mNextShowText));
         playbackLogo.gameObject.SetActive(false);
-        if (videoIndex >= mVideoFilePathsFound.Count) {
-            videoIndex = 0;
+
+        //Stop the server time countdown and update server time so it's empty again
+        if (mServerTimeEnumerator != null) {
+            StopCoroutine(mServerTimeEnumerator);
+            mServerTimeEnumerator = null;
+        }
+
+        if (mVideoIndex >= mVideoFilePathsFound.Count) {
+            mVideoIndex = 0;
             ResetToEndOfStreamState();
         } else {
             PlayBumpAndLogo(OnLogoPostRollComplete);
+        }
+        UpdateTimeOnServer();
+    }
+
+    void UpdateTimeOnServer() {
+        if (state == eTVState.PLAYBACK) {
+            string formattedTime = "Current show " + mCurrentShowText;
+            if (videoPlayer.length == 0) {
+                formattedTime += " just started";
+            } else {
+                int remainingTime = (int)(videoPlayer.length - videoPlayer.time);
+                int minutes = remainingTime / 60;
+                formattedTime += " ends in " + minutes.ToString() + " minutes";
+            }
+            StartCoroutine(RESTApiTest.UpdateTimeOnServer(formattedTime));
+        } else {
+            //TODO this will wind up lying for a minute if it fires during a postroll bump
+            int minuteWait = (mCountdownTimer / 60);
+            StartCoroutine(RESTApiTest.UpdateTimeOnServer("Next show is " + mNextShowText + " in " + minuteWait.ToString() + " minutes"));
+        }
+    }
+
+    private bool mUpdateServerTime = true;
+    private IEnumerator StartServerTimeCountdown() {
+        UpdateTimeOnServer();
+        while (mUpdateServerTime) {
+            yield return new WaitForSeconds(60.0f);
+            UpdateTimeOnServer();
         }
     }
 
@@ -568,7 +608,7 @@ public class CountdownScript : MonoBehaviour
     void OnLogoPostRollComplete() {
         mQueuedPostLogoAction = null;
         scheduleScript.AdvanceSchedule();
-        ResetToCountdownState(mMidShowWait);
+        ResetToCountdownState(mTimeBetweenShowWait);
     }
 
     private void StartSubtitles(TextAsset assetToSub) {
@@ -587,20 +627,20 @@ public class CountdownScript : MonoBehaviour
 
     private const int mServerScheduleLength = 5;
     private void UpdateCurrentShowText() {
-        if(videoIndex < 0) {
+        if(mVideoIndex < 0) {
             Debug.LogError("Video index was still set to 0, did we load videos right?");
             return;
         }
-        mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex]);
+        mCurrentShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex]);
         StartCoroutine(RESTApiTest.UpdateShowOnServer(mCurrentShowText));
         List<string> upcomingShows = new List<string>();
         for(int i=0; i < mServerScheduleLength; i++) {
-            if(videoIndex + i > mVideoFilePathsFound.Count) {
+            if(mVideoIndex + i > mVideoFilePathsFound.Count) {
                 continue;
             }
 
-            if(videoIndex + i < mVideoFilePathsFound.Count) {
-                upcomingShows.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[videoIndex + i]));
+            if(mVideoIndex + i < mVideoFilePathsFound.Count) {
+                upcomingShows.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex + i]));
             }
         }
         StartCoroutine(RESTApiTest.UpdateScheduleOnServer(upcomingShows));
@@ -617,7 +657,7 @@ public class CountdownScript : MonoBehaviour
             return;
         }
         scheduleScript.AdvanceSchedule();
-        videoIndex++;
+        mVideoIndex++;
         UpdateCurrentShowText();
     }
 
@@ -656,7 +696,7 @@ public class CountdownScript : MonoBehaviour
                 //Pull a random episode from the series
                 var showFilePaths = mSeriesDict[seriesName];
                 var randomEpisode = showFilePaths[UnityEngine.Random.Range(0, showFilePaths.Count)];
-                mVideoFilePathsFound.Insert(videoIndex,randomEpisode);
+                mVideoFilePathsFound.Insert(mVideoIndex,randomEpisode);
                 UpdateCurrentShowText();
                 UpdateScheduleScript();
                 //TODO actually remove any other instance of this episode

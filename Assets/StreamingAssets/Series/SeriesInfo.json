@@ -281,6 +281,30 @@
                 "Episodic​",
                 "Cartoon​"
             ]
+        },
+        {
+            "Name": "Loonatics Unleashed",
+            "FilePath": "D:/Videos/TV/Loonatics Unleashed",
+            "Tags": [
+                "Cartoon​",
+                "Superhero​",
+                "WB​"
+            ]
+        },
+        {
+            "Name": "Dragonball",
+            "FilePath": "D:/Videos/TV/Dragonball Complete Saga HD/Season 1 Dragonball",
+            "Tags": [
+                "Anime​"
+            ]
+        },
+        {
+            "Name": "Swat Kats",
+            "FilePath": "D:/Videos/TV/(1993-1995) Swat Kats x264 480p",
+            "Tags": [
+                "Cartoon​",
+                "Superhero​"
+            ]
         }
     ]
 }

@@ -82,6 +82,10 @@ public class RESTApiTest : MonoBehaviour {
         yield return UpdateOnServer("http://127.0.0.1:5000/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
+    public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
+        yield return UpdateOnServer("http://127.0.0.1:5000/PTV/time/", "TimeLeft", timeRemaining);
+    }
+
     private bool mQueryMessageQueue = true;
     private bool mInitialConnection = true;
     IEnumerator GetMessageQueue(string uri) {
