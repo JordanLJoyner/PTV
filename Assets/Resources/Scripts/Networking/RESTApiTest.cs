@@ -19,6 +19,7 @@ public class ServerMessageBundle {
 
 public class RESTApiTest : MonoBehaviour {
     public CountdownScript countdownScript;
+    private static string mBaseURL = "http://127.0.0.1";
 
     // Start is called before the first frame update
     void Start() {
@@ -33,7 +34,7 @@ public class RESTApiTest : MonoBehaviour {
             seriesString += series.Name + '\n';
         }
         
-        StartCoroutine(UpdateOnServer("http://127.0.0.1:5000/PTV/series/","series_list", seriesString));
+        StartCoroutine(UpdateOnServer(mBaseURL+":5000/PTV/series/","series_list", seriesString));
         StartCoroutine(StartRequestingMessageQueue());
     }
 
@@ -71,19 +72,19 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     public static IEnumerator UpdateSongOnServer(string songName) {
-        yield return UpdateOnServer("http://127.0.0.1:5000/PTV/song/","SongName",songName);
+        yield return UpdateOnServer(mBaseURL+ ":5000/PTV/song/","SongName",songName);
     }
 
     public static IEnumerator UpdateShowOnServer(string showName) {
-        yield return UpdateOnServer("http://127.0.0.1:5000/PTV/show/", "ShowName", showName);
+        yield return UpdateOnServer(mBaseURL + ":5000/PTV/show/", "ShowName", showName);
     }
 
     public static IEnumerator UpdateScheduleOnServer(List<string> schedule) {
-        yield return UpdateOnServer("http://127.0.0.1:5000/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
+        yield return UpdateOnServer(mBaseURL + ":5000/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
-        yield return UpdateOnServer("http://127.0.0.1:5000/PTV/time/", "TimeLeft", timeRemaining);
+        yield return UpdateOnServer(mBaseURL + ":5000/PTV/time/", "TimeLeft", timeRemaining);
     }
 
     private bool mQueryMessageQueue = true;
@@ -122,7 +123,7 @@ public class RESTApiTest : MonoBehaviour {
 
     IEnumerator StartRequestingMessageQueue() {
         while (mQueryMessageQueue) {
-            yield return GetMessageQueue("http://127.0.0.1:5000/PTVMessageQueue/");
+            yield return GetMessageQueue(mBaseURL + ":5000/PTVMessageQueue/");
             yield return new WaitForSeconds(1.0f);
         }
     }
@@ -147,6 +148,9 @@ public class RESTApiTest : MonoBehaviour {
                     break;
                 case "REQUEST":
                     countdownScript.OnRequestRequestedFromServer(serverMessages.values[i].Data);
+                    break;
+                case "START":
+                    countdownScript.OnStartRequestFromServer(serverMessages.values[i].Data);
                     break;
                 default:
                     break;

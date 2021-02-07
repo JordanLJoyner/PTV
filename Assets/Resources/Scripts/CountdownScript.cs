@@ -26,6 +26,7 @@ public class CountdownScript : MonoBehaviour
     public TextMeshProUGUI reminderText;
     public TextMeshProUGUI EventText;
     public UIParticleSystem uiParticleSystem;
+    [SerializeField] private bool m_SkipBumps = false;
 
     private List<AudioClip> musicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
@@ -46,19 +47,22 @@ public class CountdownScript : MonoBehaviour
         LOGO,
         BUMP
     }
-    private eTVState state;
+    private eTVState state = eTVState.UNSET;
     private bool playbackStarted = false;
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
     private int preshowWait = 80;
     private int mTimeBetweenShowWait = 180;
     private float mMaxVolume = 1.0f;
-    private string mSongName;
+    private string mSongName = "Unset";
 
     private string mFilesFound = "";
     private List<string> mVideoFilePathsFound = new List<string>();
     private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
+    private bool mUpdateServerTime = true;
+    private bool mAutoRandomizeContent = false;
+
     // Start is called before the first frame update
     void Start() {
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
@@ -66,8 +70,14 @@ public class CountdownScript : MonoBehaviour
         LoadMusic();
         LoadBumps();
         LoadVideos();
-        ResetToCountdownState(preshowWait);
-        StartCoroutine(StartServerTimeCountdown());
+
+        if (mAutoRandomizeContent) {
+            UpdateCurrentShowText();
+            UpdateScheduleScript();
+            ResetToCountdownState(preshowWait);
+        }
+
+        StartCoroutine(StartServerTimeLoop());
     }
 
     private void LoadVideos() {
@@ -140,8 +150,6 @@ public class CountdownScript : MonoBehaviour
                 break;
         }
         mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex]);
-        UpdateCurrentShowText();
-        UpdateScheduleScript();
     }
 
     private void UpdateScheduleScript() {
@@ -279,6 +287,14 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void Update() {
+        if(state == eTVState.UNSET) {
+            if (Input.GetKeyDown(KeyCode.Q)) {
+                UpdateCurrentShowText();
+                UpdateScheduleScript();
+                ResetToCountdownState(preshowWait);
+            }
+        }
+
         if (state == eTVState.COUNTDOWN) {
             if (!musicPlayer.isPlaying) {
                 PlayNextMusicClip();
@@ -383,7 +399,11 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void OnCountdownComplete() {
-        PlayPrerollBump();
+        if (m_SkipBumps) {
+            StartContentPlayback();
+        } else {
+            PlayPrerollBump();
+        }
         HideTextFields();
     }
 
@@ -459,10 +479,8 @@ public class CountdownScript : MonoBehaviour
             int bumpIndex = UnityEngine.Random.Range(0, ptvBumpFilePaths.Count);
             string fileName = ptvBumpFilePaths[bumpIndex];
             fileName = fileName.Substring(0, fileName.LastIndexOf("."));
-            //VideoClip clp = Resources.Load<VideoClip>("Bumps/Random Bumps/" + fileName);
             videoPlayer.url = ptvBumpFilePaths[bumpIndex];
             videoPlayer.enabled = true;
-            //videoPlayer.clip = clp;
             videoPlayer.Play();
             mQueuedPostLogoAction = postLogoAction;
             ptvBumpFilePaths.RemoveAt(bumpIndex);
@@ -561,8 +579,11 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
-    private bool mUpdateServerTime = true;
-    private IEnumerator StartServerTimeCountdown() {
+    
+    /// <summary>
+    /// Starts the loop that updates the time value on the server every 60s
+    /// </summary>
+    private IEnumerator StartServerTimeLoop() {
         UpdateTimeOnServer();
         while (mUpdateServerTime) {
             yield return new WaitForSeconds(60.0f);
@@ -706,6 +727,27 @@ public class CountdownScript : MonoBehaviour
             
         } else {
             Debug.Log("Tried to request a show outside of countdown state");
+        }
+    }
+
+    public void OnStartRequestFromServer(string commaSeparatedShowNames) {
+        if (state == eTVState.UNSET) {
+            string[] seriesToStartWith = commaSeparatedShowNames.Split(',');
+            foreach (String seriesName in seriesToStartWith) {
+                if (mSeriesDict.ContainsKey(seriesName)) {
+                    //Pull a random episode from the series
+                    var showFilePaths = mSeriesDict[seriesName];
+                    var randomEpisode = showFilePaths[UnityEngine.Random.Range(0, showFilePaths.Count)];
+                    mVideoFilePathsFound.Insert(mVideoIndex, randomEpisode);
+                } else {
+                    Debug.LogError("Tried to pull a series that doesn't exist");
+                }
+            }
+            UpdateCurrentShowText();
+            UpdateScheduleScript();
+            ResetToCountdownState(preshowWait);
+        } else {
+            Debug.Log("Tried to Start a show outside of starting state");
         }
     }
     //****************

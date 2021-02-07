@@ -1298,6 +1298,7 @@ MonoBehaviour:
   reminderText: {fileID: 769873955}
   EventText: {fileID: 382075218}
   uiParticleSystem: {fileID: 1183865405}
+  m_SkipBumps: 0
 --- !u!114 &539002725
 MonoBehaviour:
   m_ObjectHideFlags: 0
