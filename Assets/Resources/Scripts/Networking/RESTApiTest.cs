@@ -152,6 +152,12 @@ public class RESTApiTest : MonoBehaviour {
                 case "START":
                     countdownScript.OnStartRequestFromServer(serverMessages.values[i].Data);
                     break;
+                case "PLAY":
+                    countdownScript.OnPlayRequestFromServer();
+                    break;
+                case "PAUSE":
+                    countdownScript.OnPauseRequestFromServer();
+                    break;
                 default:
                     break;
             }

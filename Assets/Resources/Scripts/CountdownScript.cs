@@ -62,6 +62,7 @@ public class CountdownScript : MonoBehaviour
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     private bool mUpdateServerTime = true;
     private bool mAutoRandomizeContent = false;
+    private bool mPaused = false;
 
     // Start is called before the first frame update
     void Start() {
@@ -340,7 +341,7 @@ public class CountdownScript : MonoBehaviour
 
             //Video just ended
             if (playbackStarted) {
-                if (!videoPlayer.isPlaying) {
+                if (!mPaused && !videoPlayer.isPlaying) {
                     CompletedShowPlayback();
                 }
             }
@@ -748,6 +749,19 @@ public class CountdownScript : MonoBehaviour
             ResetToCountdownState(preshowWait);
         } else {
             Debug.Log("Tried to Start a show outside of starting state");
+        }
+    }
+
+    public void OnPlayRequestFromServer() {
+        if(state == eTVState.PLAYBACK) {
+            videoPlayer.Play();
+        }
+    }
+
+    public void OnPauseRequestFromServer() {
+        if(state == eTVState.PLAYBACK) {
+            mPaused = true;
+            videoPlayer.Pause();
         }
     }
     //****************
