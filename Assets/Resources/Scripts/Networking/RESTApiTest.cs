@@ -17,15 +17,47 @@ public class ServerMessageBundle {
     public List<ServerMessage> values = new List<ServerMessage>();
 }
 
+[Serializable]
+public class ServerRoom {
+    public string name;
+    public string theater_name;
+    public string url;
+    public int id;
+    public int viewers;
+    public string current_show;
+    public string series;
+    public string status;
+
+    public ServerRoom(string name, string url, int id, int viewers, string current_show, string series) {
+        this.theater_name = name;
+        this.url = url;
+        this.id = id;
+        this.viewers = viewers;
+        this.current_show = current_show;
+        this.series = series;
+        this.status = RESTApiTest.STATUS_AVAILABLE;
+    }
+}
+
 public class RESTApiTest : MonoBehaviour {
     public CountdownScript countdownScript;
     private static string mBaseURL = "http://127.0.0.1";
+    private static string mPortNumber = ":5000";
+
+    private static int mRoomId = -1;
+    public static string STATUS_AVAILABLE = "available";
+    public static string STATUS_BUSY = "available";
+    public static string STATUS_PLAYING = "available";
+    private string mSeriesString = "";
+    private bool mQueryMessageQueue = true;
+    private bool mInitialConnection = true;
 
     // Start is called before the first frame update
     void Start() {
         var seriesData = FileUtils.LoadSeriesData();
         var seriesDict = new Dictionary<String, List<string>>();
         string seriesString = "";
+        Application.wantsToQuit += OnQuitIncoming;
 
         foreach (VideoSeries series in seriesData) {
             List<string> filePathsForSeries = new List<string>();
@@ -33,11 +65,17 @@ public class RESTApiTest : MonoBehaviour {
             seriesDict.Add(series.Name, filePathsForSeries);
             seriesString += series.Name + '\n';
         }
-        
-        StartCoroutine(UpdateOnServer(mBaseURL+":5000/PTV/series/","series_list", seriesString));
+        mSeriesString = seriesString;
+        StartCoroutine(UpdateOnServer(mBaseURL+mPortNumber+"/PTV/series/","series_list", seriesString));
         StartCoroutine(StartRequestingMessageQueue());
+        StartCoroutine(GetRoomId());
     }
 
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.X)) {
+           // StartCoroutine(CleanupRoom());
+        }
+    }
     /*
     IEnumerator Upload() {
         WWWForm form = new WWWForm();
@@ -57,7 +95,6 @@ public class RESTApiTest : MonoBehaviour {
 
     private static IEnumerator UpdateOnServer(string endPoint, string fieldName, string value) {
         WWWForm form = new WWWForm();
-        var seriesData = FileUtils.LoadSeriesData();
         form.AddField(fieldName, value);
 
         using (UnityWebRequest www = UnityWebRequest.Post(endPoint, form)) {
@@ -71,29 +108,57 @@ public class RESTApiTest : MonoBehaviour {
         }
     }
 
+    private static IEnumerator DeleteTheaterRoomOnServer(string endPoint) {
+        Debug.Log("starting delete on server using endpoint: " + endPoint);
+        endPoint += "?id=" + mRoomId.ToString();
+        mRoomId = -1;
+        using (UnityWebRequest www = UnityWebRequest.Delete(endPoint)) {
+            yield return www.SendWebRequest();
+
+            if (www.isNetworkError || www.isHttpError) {
+                Debug.Log(www.error + " for " + endPoint);
+            } else {
+                Debug.Log("Called delete on server");
+            }
+        }
+    }
+
     public static IEnumerator UpdateSongOnServer(string songName) {
-        yield return UpdateOnServer(mBaseURL+ ":5000/PTV/song/","SongName",songName);
+        yield return UpdateOnServer(mBaseURL+ mPortNumber+"/PTV/song/","SongName",songName);
     }
 
     public static IEnumerator UpdateShowOnServer(string showName) {
-        yield return UpdateOnServer(mBaseURL + ":5000/PTV/show/", "ShowName", showName);
+        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/show/", "ShowName", showName);
     }
 
     public static IEnumerator UpdateScheduleOnServer(List<string> schedule) {
-        yield return UpdateOnServer(mBaseURL + ":5000/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
+        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
-        yield return UpdateOnServer(mBaseURL + ":5000/PTV/time/", "TimeLeft", timeRemaining);
+        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/time/", "TimeLeft", timeRemaining);
     }
 
-    private bool mQueryMessageQueue = true;
-    private bool mInitialConnection = true;
-    IEnumerator GetMessageQueue(string uri) {
+    private IEnumerator GetRoomId() {
+        yield return new WaitForSeconds(0.1f);
+        yield return GetFromServer(mBaseURL + mPortNumber+"/PTV/rooms/newid", OnRoomIdReceived);
+    }
+
+    private void OnRoomIdReceived(string value) {
+        mRoomId = int.Parse(value);
+        Debug.Log("Room Id will be " + mRoomId.ToString());
+        CreateAvailableRoomOnServer();
+    }
+
+    private void CreateAvailableRoomOnServer() {
+        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0,"Unclear", mSeriesString);
+        StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber+"/PTV/rooms/", "room",JsonUtility.ToJson(thisRoom)));
+    }
+
+    IEnumerator GetFromServer(string uri, Action<string> onServerResponse) {
         using (UnityWebRequest webRequest = UnityWebRequest.Get(uri)) {
             // Request and wait for the desired page.
             yield return webRequest.SendWebRequest();
-
             string[] pages = uri.Split('/');
             int page = pages.Length - 1;
 
@@ -107,9 +172,8 @@ public class RESTApiTest : MonoBehaviour {
                     countdownScript.OnInitialServerConnection();
                 }
                 //Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
-                string JSONToParse = "{\"values\":" + webRequest.downloadHandler.text + "}";
-                var serverMessages = JsonUtility.FromJson<ServerMessageBundle>(JSONToParse);
-                processServerMessages(serverMessages);
+                
+                onServerResponse?.Invoke(webRequest.downloadHandler.text);
             }
         }
     }
@@ -123,9 +187,15 @@ public class RESTApiTest : MonoBehaviour {
 
     IEnumerator StartRequestingMessageQueue() {
         while (mQueryMessageQueue) {
-            yield return GetMessageQueue(mBaseURL + ":5000/PTVMessageQueue/");
+            yield return GetFromServer(mBaseURL + mPortNumber+"/PTVMessageQueue/", OnMessageQueueReceived);
             yield return new WaitForSeconds(1.0f);
         }
+    }
+
+    private void OnMessageQueueReceived(string serverJson) {
+        string JSONToParse = "{\"values\":" + serverJson + "}";
+        var serverMessages = JsonUtility.FromJson<ServerMessageBundle>(JSONToParse);
+        processServerMessages(serverMessages);
     }
 
     void processServerMessages(ServerMessageBundle serverMessages) {
@@ -162,5 +232,25 @@ public class RESTApiTest : MonoBehaviour {
                     break;
             }
         }
+    }
+
+    private bool OnQuitIncoming() {
+        if (!startedCleanUp) {
+            StartCoroutine(CleanupRoom());
+        }
+        return cleanupComplete;
+    }
+
+    private bool startedCleanUp = false;
+    private bool cleanupComplete = false;
+    //When we're shutting down clean up our id on the server
+    private IEnumerator CleanupRoom() {
+        startedCleanUp = true;
+        if (mRoomId > -1) {
+            Debug.Log("Destroy id: " + mRoomId.ToString() + " on the server");
+            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber + "/PTV/rooms/");
+        }
+        cleanupComplete = true;
+        Application.Quit();
     }
 }

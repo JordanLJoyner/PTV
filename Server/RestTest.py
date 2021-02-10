@@ -5,6 +5,7 @@ from flask_restful import Api, Resource, reqparse
 from flask_cors import CORS
 from flask_classy import FlaskView, route
 import copy
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -175,7 +176,7 @@ class Pause(Resource):
         emote_message = {"MessageType": "PAUSE"}
         messageQueue.append(emote_message)
         return "Pause request logged", serverSuccessCode
-        
+
 #used to fix cors issue from html
 #https://stackoverflow.com/questions/23741362/getting-cors-cross-origin-error-when-using-python-flask-restful-with-consum
 @app.after_request
@@ -203,6 +204,64 @@ users = [
         "occupation": "Web Engineer"
     }
 ]
+
+mRoomId = 0
+mRooms = [
+    {
+        "name": "JTown",
+        "url": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
+        "id": 0,
+        "viewers": 0,
+        "current_show": "Batman Beyond",
+        "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
+        "status": "available"
+    }
+]
+
+class Room(Resource):
+    def get(self):
+        global mRooms
+        return mRooms, serverSuccessCode   
+
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("room")
+        args = parser.parse_args()
+        print(args)
+        print("\n\n")
+        newRoom = args["room"]
+        print(newRoom)
+        mRooms.append(newRoom)
+        return "Added new room", serverSuccessCode
+
+#    def delete(self):
+#        global mRooms
+#        parser = reqparse.RequestParser()
+#        parser.add_argument("id")
+#        args = parser.parse_args()
+#        roomId = args["id"]
+#        print("ID to remove: " + roomId)
+#        roomToRemove = None
+#        for room in mRooms:
+#            print(room)
+#            roomJson = room
+#            if isinstance(roomJson, str):
+#                roomJson = json.loads(room)
+#            id1 = int(roomJson["id"])
+#            id2 = int(roomId)
+#            if id1 == id2:
+#                print("found room with id " + roomId)
+#                roomToRemove = room
+#                break
+#        if roomToRemove != None:
+#            mRooms.remove(roomToRemove)
+
+class RoomId(Resource):
+    def get(self):
+        global mRoomId
+        value = mRoomId
+        mRoomId = mRoomId + 1
+        return  value, serverSuccessCode;  
 
 class User(Resource):
 
@@ -274,7 +333,8 @@ api.add_resource(Time,"/PTV/time/")
 api.add_resource(Start,"/PTV/start/")
 api.add_resource(Play,"/PTV/play/")
 api.add_resource(Pause,"/PTV/pause/")
-
+api.add_resource(Room,"/PTV/rooms/")
+api.add_resource(RoomId,"/PTV/rooms/newid")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
