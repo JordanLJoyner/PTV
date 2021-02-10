@@ -347,6 +347,16 @@ class ChangeRoomStatus(Resource):
         print(room)
         room[STATUS_FIELD] = newStatus
         return "Updated " + str(room), serverSuccessCode
+
+class ChangeStreamURL(Resource):
+    def put(self, id):
+        room = getRoomForId(id)
+        parser = reqparse.RequestParser()
+        parser.add_argument("url")
+        args = parser.parse_args()
+        newUrl = args["url"]
+        room["url"] = newUrl
+        return str(id) + " now has stream url " + str(newUrl), serverSuccessCode        
 #left here for reference
 #api.add_resource(User, "/user/<string:name>")
 #api.add_resource(Util, "/Util/")
@@ -374,6 +384,7 @@ api.add_resource(RoomId,"/PTV/rooms/newid")
 #Used by the hackweek app software to take over a new room
 api.add_resource(Host,"/PTV/room/<int:id>/host")
 api.add_resource(ChangeRoomStatus,"/PTV/room/<int:id>/status")
+api.add_resource(ChangeStreamURL,"/PTV/room/<int:id>/url")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
