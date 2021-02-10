@@ -40,14 +40,17 @@ public class ServerRoom {
 }
 
 public class RESTApiTest : MonoBehaviour {
+    [SerializeField] private TMPro.TextMeshProUGUI serverIdField;
+
     public CountdownScript countdownScript;
     private static string mBaseURL = "http://127.0.0.1";
     private static string mPortNumber = ":5000";
 
-    private static int mRoomId = -1;
+    public static int mRoomId = -1;
     public static string STATUS_AVAILABLE = "available";
     public static string STATUS_BUSY = "available";
     public static string STATUS_PLAYING = "available";
+
     private string mSeriesString = "";
     private bool mQueryMessageQueue = true;
     private bool mInitialConnection = true;
@@ -153,6 +156,9 @@ public class RESTApiTest : MonoBehaviour {
     private void OnRoomIdReceived(string value) {
         mRoomId = int.Parse(value);
         Debug.Log("Room Id will be " + mRoomId.ToString());
+        if(serverIdField != null) {
+            serverIdField.text = "Server Id: " + value;
+        }
         CreateAvailableRoomOnServer();
     }
 
