@@ -18,9 +18,7 @@ STATUS_AVAILABLE = "available"
 STATUS_BUSY = "busy"
 STATUS_PLAYING = "playing"
 
-videoSeries = ""
-messageQueue = []
-mTime = ""
+messageQueue = {}
 
 mRoomId = 1
 mRooms = [
@@ -36,9 +34,11 @@ mRooms = [
         "status": "available",
         "song_name": "No song registered",
     	"firebaseid": "firebase1",
-    	"schedule": {}
+    	"schedule": {},
+    	"time": ""
     }
 ]
+messageQueue[0] = []
 
 class Series(Resource):
     def post(self, id):
@@ -60,50 +60,63 @@ class Util(Resource):
         return users, serverSuccessCode
 
 class PTVMessageQueue(Resource):
-    def get(self):
-        messageQueueClone = copy.deepcopy(messageQueue)
-        messageQueue.clear()
+    def get(self, id):
+        messageQueueClone = copy.deepcopy(messageQueue[id])
+        messageQueue[id].clear()
         return messageQueueClone, serverSuccessCode
 
-    def post(self):
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("MessageType")
         args = parser.parse_args()
         message  = args["MessageType"]
-        messageQueue.append(message)
+        messageQueue[id].append(message)
         return "posted " + message, serverSuccessCode
 
 class SkipShow(Resource):
-    def post(self):
+    def post(self, id):
         skip_message = {"MessageType": "SKIP"}
-        messageQueue.append(skip_message)
+        messageQueue[id].append(skip_message)
         return "skip request logged", serverSuccessCode
 
 class VetoShow(Resource):
-    def post(self):
+    def post(self, id):
         veto_message = {"MessageType": "VETO"}
-        messageQueue.append(veto_message)
+        messageQueue[id].append(veto_message)
         return "veto request logged", serverSuccessCode
 
 class Emote(Resource):
-    def post(self):
+    def post(self, id):
         emote_message = {"MessageType": "EMOTE_WTF"}
-        messageQueue.append(emote_message)
+        messageQueue[id].append(emote_message)
         return "WTF Emote request logged", serverSuccessCode
 
 class Request(Resource):
-    def post(self):
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("showName")
         args = parser.parse_args()
         showName = args["showName"];
         print(showName)
-        if showName in videoSeries:
+        room = getRoomForId(id)
+        if showName in room["series"]:
             requestMessage = {"MessageType": "REQUEST", "Data": showName }
-            messageQueue.append(requestMessage)
+            messageQueue[id].append(requestMessage)
             return "Request for " + args["ShowName"] + " logged", serverSuccessCode;        
         else:
             return "Could not find a matching show for " + showName, serverErrorCode
+
+class Play(Resource):
+    def post(self, id):
+        emote_message = {"MessageType": "PLAY"}
+        messageQueue[id].append(emote_message)
+        return "Play request logged", serverSuccessCode
+
+class Pause(Resource):
+    def post(self, id):
+        emote_message = {"MessageType": "PAUSE"}
+        messageQueue[id].append(emote_message)
+        return "Pause request logged", serverSuccessCode
 
 class Song(Resource):        
     def get(self,id):
@@ -147,29 +160,18 @@ class Schedule(Resource):
         return "schedule registered", serverSuccessCode
 
 class Time(Resource):        
-    def get(self):
-        if mTime == "":
+    def get(self, id):
+        room = getRoomForId(id)
+        if room["time"] == "":
             return "Time not set", serverErrorCode
-        return mTime, serverSuccessCode
-    def post(self):
+        return room["time"], serverSuccessCode
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("TimeLeft")
         args = parser.parse_args()
-        global mTime
-        mTime = args["TimeLeft"]
-        return mTime + " registered", serverSuccessCode
-
-class Play(Resource):
-    def post(self):
-        emote_message = {"MessageType": "PLAY"}
-        messageQueue.append(emote_message)
-        return "Play request logged", serverSuccessCode
-
-class Pause(Resource):
-    def post(self):
-        emote_message = {"MessageType": "PAUSE"}
-        messageQueue.append(emote_message)
-        return "Pause request logged", serverSuccessCode
+        room = getRoomForId(id)
+        room["time"] = args["TimeLeft"]
+        return room["time"] + " registered", serverSuccessCode
 
 #used to fix cors issue from html
 #https://stackoverflow.com/questions/23741362/getting-cors-cross-origin-error-when-using-python-flask-restful-with-consum
@@ -249,6 +251,7 @@ class RoomId(Resource):
     def get(self):
         global mRoomId
         value = mRoomId
+        messageQueue[value] = []
         mRoomId = mRoomId + 1
         return  value, serverSuccessCode;  
 
@@ -320,7 +323,7 @@ class Host(Resource):
         showNames = args["shows"];
         print("Requested Host with \n"+showNames)
         requestMessage = {"MessageType": "START", "Data": showNames }
-        messageQueue.append(requestMessage)
+        messageQueue[id].append(requestMessage)
         return  "Hosting started", serverSuccessCode;  
 
 class ChangeRoomStatus(Resource):
@@ -354,19 +357,19 @@ totalRoomPrefix = prefix + roomPrefix
 
 api.add_resource(Series,totalRoomPrefix+"/series/")
 
-api.add_resource(PTVMessageQueue,"/PTVMessageQueue/")
+api.add_resource(PTVMessageQueue,totalRoomPrefix+"/MessageQueue/")
 
-api.add_resource(SkipShow,prefix+"/SkipShow/")
-api.add_resource(VetoShow,prefix+"/Veto/")
+api.add_resource(SkipShow,totalRoomPrefix+"/SkipShow/")
+api.add_resource(VetoShow,totalRoomPrefix+"/Veto/")
 api.add_resource(Song,totalRoomPrefix+"/song/")
 api.add_resource(Show,totalRoomPrefix+"/show/")
 
 api.add_resource(Schedule,totalRoomPrefix+"/schedule/")
-api.add_resource(Emote,prefix+"/emote/")
-api.add_resource(Request,prefix+"/request/")
-api.add_resource(Time,prefix+"/time/")
-api.add_resource(Play,prefix+"/play/")
-api.add_resource(Pause,prefix+"/pause/")
+api.add_resource(Emote,totalRoomPrefix+"/emote/")
+api.add_resource(Request,totalRoomPrefix+"/request/")
+api.add_resource(Time,totalRoomPrefix+"/time/")
+api.add_resource(Play,totalRoomPrefix+"/play/")
+api.add_resource(Pause,totalRoomPrefix+"/pause/")
 
 api.add_resource(Rooms,prefix+"/rooms/")
 

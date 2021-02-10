@@ -28,6 +28,7 @@ public class ServerRoom {
     public string series;
     public string status;
     public string song_name = "no song registered";
+    public string time = "";
 
     public ServerRoom(string name, string url, int id, int viewers, string series) {
         this.theater_name = name;
@@ -68,7 +69,6 @@ public class RESTApiTest : MonoBehaviour {
         Application.wantsToQuit += OnQuitIncoming;
         SetSeriesData();
 
-        StartCoroutine(StartRequestingMessageQueue());
         StartCoroutine(GetRoomId());
     }
 
@@ -155,7 +155,7 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/time/", "TimeLeft", timeRemaining);
+        yield return UpdateOnServer(getFullRoomUrl() + "/time/", "TimeLeft", timeRemaining);
     }
 
     private IEnumerator GetRoomId() {
@@ -170,6 +170,7 @@ public class RESTApiTest : MonoBehaviour {
             serverIdField.text = "Server Id: " + value;
         }
         CreateAvailableRoomOnServer();
+        StartCoroutine(StartRequestingMessageQueue());
     }
 
     private void CreateAvailableRoomOnServer() {
@@ -208,7 +209,7 @@ public class RESTApiTest : MonoBehaviour {
 
     IEnumerator StartRequestingMessageQueue() {
         while (mQueryMessageQueue) {
-            yield return GetFromServer(mBaseURL + mPortNumber + "/PTVMessageQueue/", OnMessageQueueReceived);
+            yield return GetFromServer(getFullRoomUrl() + "/MessageQueue/", OnMessageQueueReceived);
             yield return new WaitForSeconds(1.0f);
         }
     }
