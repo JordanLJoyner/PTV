@@ -36,7 +36,7 @@ public class CountdownScript : MonoBehaviour
     private int mMusicIndex = 0;
     private bool mFiredAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
-    private const string mMusicDirectory = "D:/Music/PTV";
+    private string mMusicDirectory = "";
     private const string mBumpDirectory = "D:/PTV/Bumps";
 
     private enum eTVState {
@@ -61,13 +61,16 @@ public class CountdownScript : MonoBehaviour
     private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     private bool mUpdateServerTime = true;
-    private bool mAutoRandomizeContent = false;
+    private bool mAutoRandomizeContent = true;
     private bool mPaused = false;
+
+    private bool mMusicEnabled = false;
 
     // Start is called before the first frame update
     void Start() {
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
         streamOverText.enabled = false;
+        LoadSettings();
         LoadMusic();
         LoadBumps();
         LoadVideos();
@@ -79,6 +82,10 @@ public class CountdownScript : MonoBehaviour
         }
 
         StartCoroutine(StartServerTimeLoop());
+    }
+
+    private void LoadSettings() {
+        mMusicDirectory = "D:/Music/PTV";
     }
 
     private void LoadVideos() {
@@ -169,26 +176,6 @@ public class CountdownScript : MonoBehaviour
         return fullPath.Substring(lastSlash, (lastDot - lastSlash));
     }
 
-    private void LoadMusic() {
-        musicFiles.Clear();
-        //TODO pull this out of a JSON file instead of hardcoding it
-        string directoryName = mMusicDirectory;
-        var info = new DirectoryInfo(directoryName);
-        if (!info.Exists) {
-            Debug.LogError("No music directory found");
-            return;
-        }
-        var files = info.GetFiles();
-        foreach(FileInfo file in files) {
-            if (!file.Name.Contains(".meta") && file.Name.Contains(".ogg")) {
-                musicFilePaths.Add(directoryName + "/" + file.Name);
-            }
-        }
-        //AudioClip[] audio = Resources.LoadAll<AudioClip>("Music");
-        //musicFiles.AddRange(audio);
-        //musicIndex = Random.Range(0,musicFiles.Count);
-    }
-
     private void LoadBumps() {
         musicFiles.Clear();
         string bumpDirectory = mBumpDirectory;
@@ -206,6 +193,32 @@ public class CountdownScript : MonoBehaviour
         //        randomBumpFilePaths.Add(file.Name);
         //    }
        //}
+    }
+
+    #region Music
+    private void LoadMusic() {
+        musicFiles.Clear();
+        string directoryName = mMusicDirectory;
+        if (directoryName == null || directoryName.Equals("")) {
+            return;
+        }
+        var info = new DirectoryInfo(directoryName);
+        if (!info.Exists) {
+            Debug.LogError("No music directory found");
+            return;
+        }
+        var files = info.GetFiles();
+        foreach (FileInfo file in files) {
+            if (!file.Name.Contains(".meta") && file.Name.Contains(".ogg")) {
+                musicFilePaths.Add(directoryName + "/" + file.Name);
+            }
+        }
+        if(musicFilePaths.Count > 0) {
+            mMusicEnabled = true;
+        }
+        //AudioClip[] audio = Resources.LoadAll<AudioClip>("Music");
+        //musicFiles.AddRange(audio);
+        //musicIndex = Random.Range(0,musicFiles.Count);
     }
 
     private void PullUpNextTrack() {
@@ -228,6 +241,9 @@ public class CountdownScript : MonoBehaviour
     }
 
     void PlayNextMusicClip() {
+        if (!mMusicEnabled) {
+            return;
+        }
         PullUpNextTrack();
         if (mLoadedAllMusicTracks) {
             musicPlayer.clip = musicFiles[UnityEngine.Random.Range(0, musicFiles.Count)];
@@ -250,8 +266,8 @@ public class CountdownScript : MonoBehaviour
             StartCoroutine(FadeOutMusic(TransitionSongs));
         }
     }
+    #endregion
 
-    
 
     public void StartCountdown(int numSeconds) {
         state = eTVState.COUNTDOWN;
@@ -310,7 +326,9 @@ public class CountdownScript : MonoBehaviour
             }
 
             if (Input.GetKeyDown(KeyCode.X)) {
-                musicPlayer.time = musicPlayer.clip.length - 10;
+                if(musicPlayer != null) {
+                    musicPlayer.time = musicPlayer.clip.length - 10;
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.V)) {
