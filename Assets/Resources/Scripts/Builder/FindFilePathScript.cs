@@ -28,7 +28,13 @@ public class FindFilePathScript : MonoBehaviour {
     }
 
     public void WriteResult(string[] paths) {
+        if(paths.Length == 0) {
+            return;
+        }
         string path = paths[0];// EditorUtility.OpenFolderPanel("", lastKnownPath, "");
+        if (FilePathText != null) {
+            FilePathText.text = path;
+        }
         if (path != "" && OnFilePathFoundEvent != null) {
             OnFilePathFoundEvent(path);
             lastKnownPath = path;

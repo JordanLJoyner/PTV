@@ -3,6 +3,7 @@ using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class OpenFileDialogScript : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class OpenFileDialogScript : MonoBehaviour
     private int mCurrentlySelectedSeries = -1;
     List<VideoSeries> mSeries = new List<VideoSeries>();
     List<string> mTags = new List<string>();
+    List<GameObject> mExistingSeriesButtons = new List<GameObject>();
 
 
     public void Start() {
@@ -41,6 +43,15 @@ public class OpenFileDialogScript : MonoBehaviour
             mFindFilePathScript.OnFilePathFoundEvent += OnFilePathChosen;
         }
 
+        refreshTags();
+
+        //Load all the tags and display them as PlusMisBlocks
+        for(int i=0; i < mTags.Count; i++) {
+            MakeBlockForNewTag(mTags[i]);
+        }
+    }
+
+    void refreshTags() {
         for (int i = 0; i < mSeries.Count; i++) {
             VideoSeries s = mSeries[i];
             for (int j = 0; j < s.Tags.Count; j++) {
@@ -49,11 +60,6 @@ public class OpenFileDialogScript : MonoBehaviour
                 }
             }
         }
-        //Load all the tags and display them as PlusMisBlocks
-        for(int i=0; i < mTags.Count; i++) {
-            MakeBlockForNewTag(mTags[i]);
-        }
-
     }
 
     void OnSeriesButtonClicked(VideoSeries s) {
@@ -166,6 +172,15 @@ public class OpenFileDialogScript : MonoBehaviour
         #if UNITY_EDITOR
             UnityEditor.AssetDatabase.Refresh();
         #endif
+    }
+
+    public void _ClearItemInfo() {
+        mSeries.Clear();
+        mDisplaySeriesScript.ClearSeries();
+    }
+
+    public void _OnBackToStartingSceneClicked() {
+        SceneManager.LoadScene("StartingScene");
     }
 
 }

@@ -19,14 +19,14 @@ public class ServerMessageBundle {
 
 [Serializable]
 public class ServerRoom {
-    public string name;
-    public string theater_name;
-    public string url;
-    public int id;
-    public int viewers;
+    public string name = "";
+    public string theater_name = "";
+    public string url = "";
+    public int id = -1;
+    public int viewers = 0;
     public string current_show = "no show registered";
-    public string series;
-    public string status;
+    public string series = "";
+    public string status = "";
     public string song_name = "no song registered";
     public string time = "";
 
@@ -194,7 +194,7 @@ public class RESTApiTest : MonoBehaviour {
             int page = pages.Length - 1;
 
             if (webRequest.isNetworkError) {
-                Debug.Log(pages[page] + ": Error: " + webRequest.error);
+                Debug.Log(pages[page] + ": Error: " + webRequest.error + "\nuri : " + uri);
                 mQueryMessageQueue = false;
                 StartCoroutine(TryToReconnectToServer());
             } else {

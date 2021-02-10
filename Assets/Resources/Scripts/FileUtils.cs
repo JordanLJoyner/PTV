@@ -48,13 +48,24 @@ public class FileUtils {
         return JsonUtility.FromJson<Schedule>(json);
     }
 
+    private static string mSettingsFileName = "/Settings.json";
     public static TheaterSettings LoadSettings() {
-        string path = Application.streamingAssetsPath + "/Settings.json";
+        string path = Application.streamingAssetsPath + mSettingsFileName;
         string json = ReadFromFile(path);
         if (json == "") {
             return null;
         }
         return JsonUtility.FromJson<TheaterSettings>(json);
+    }
+
+    public static void SaveSettings(TheaterSettings settings) {
+        string path = Application.streamingAssetsPath + mSettingsFileName;
+        string settingsJson = JsonUtility.ToJson(settings);
+        using (FileStream fs = new FileStream(path, FileMode.Truncate)) {
+            using (StreamWriter writer = new StreamWriter(fs)) {
+                writer.Write(settingsJson);
+            }
+        }
     }
 
     public static VideoSeries[] LoadSeriesData() {
