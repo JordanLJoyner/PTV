@@ -119,7 +119,6 @@ public class RESTApiTest : MonoBehaviour {
 
     private static IEnumerator DeleteTheaterRoomOnServer(string endPoint) {
         Debug.Log("starting delete on server using endpoint: " + endPoint);
-        endPoint += "?id=" + mRoomId.ToString();
         mRoomId = -1;
         using (UnityWebRequest www = UnityWebRequest.Delete(endPoint)) {
             yield return www.SendWebRequest();
@@ -260,7 +259,7 @@ public class RESTApiTest : MonoBehaviour {
         startedCleanUp = true;
         if (mRoomId > -1) {
             Debug.Log("Destroy id: " + mRoomId.ToString() + " on the server");
-            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber + "/PTV/rooms/");
+            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber + "/PTV/room/" + mRoomId.ToString());
         }
         cleanupComplete = true;
         Application.Quit();

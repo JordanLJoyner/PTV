@@ -271,27 +271,14 @@ class Room(Resource):
         print(room)
         room[STATUS_FIELD] = newStatus
         return "Updated " + str(room), serverSuccessCode
-#    def delete(self):
-#        global mRooms
-#        parser = reqparse.RequestParser()
-#        parser.add_argument("id")
-#        args = parser.parse_args()
-#        roomId = args["id"]
-#        print("ID to remove: " + roomId)
-#        roomToRemove = None
-#        for room in mRooms:
-#            print(room)
-#            roomJson = room
-#            if isinstance(roomJson, str):
-#                roomJson = json.loads(room)
-#            id1 = int(roomJson["id"])
-#            id2 = int(roomId)
-#            if id1 == id2:
-#                print("found room with id " + roomId)
-#                roomToRemove = room
-#                break
-#        if roomToRemove != None:
-#            mRooms.remove(roomToRemove)
+        
+    def delete(self, id):
+        roomToRemove = getRoomForId(id)
+        print("ID to remove: " + str(id))
+        if roomToRemove != None:
+	        print("Removing Room: " + str(id))
+	        global mRooms
+	        mRooms.remove(roomToRemove)
 
 class RoomId(Resource):
     def get(self):
