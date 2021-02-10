@@ -241,6 +241,11 @@ class Rooms(Resource):
         newRoom[STATUS_FIELD] = STATUS_AVAILABLE
         mRooms.append(newRoom)
         return "Added new room", serverSuccessCode
+    
+    def delete(self):
+        global mRooms
+        mRooms.clear()
+        return "Cleared Rooms", serverSuccessCode
 
 def getRoomForId(id):
     global mRooms
