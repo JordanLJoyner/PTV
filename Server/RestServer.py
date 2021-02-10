@@ -361,30 +361,31 @@ class ChangeStreamURL(Resource):
 #api.add_resource(User, "/user/<string:name>")
 #api.add_resource(Util, "/Util/")
 
-api.add_resource(Series,"/PTV/series/")
+prefix = "/PTV"
+api.add_resource(Series,prefix+"/series/")
 api.add_resource(PTVMessageQueue,"/PTVMessageQueue/")
-api.add_resource(SkipShow,"/PTV/SkipShow/")
-api.add_resource(VetoShow,"/PTV/Veto/")
-api.add_resource(Song,"/PTV/song/")
-api.add_resource(Show,"/PTV/show/")
-api.add_resource(Schedule,"/PTV/schedule/")
-api.add_resource(Emote,"/PTV/emote/")
-api.add_resource(Request,"/PTV/request/")
-api.add_resource(Time,"/PTV/time/")
-api.add_resource(Play,"/PTV/play/")
-api.add_resource(Pause,"/PTV/pause/")
-api.add_resource(Rooms,"/PTV/rooms/")
+api.add_resource(SkipShow,prefix+"/SkipShow/")
+api.add_resource(VetoShow,prefix+"/Veto/")
+api.add_resource(Song,prefix+"/song/")
+api.add_resource(Show,prefix+"/show/")
+api.add_resource(Schedule,prefix+"/schedule/")
+api.add_resource(Emote,prefix+"/emote/")
+api.add_resource(Request,prefix+"/request/")
+api.add_resource(Time,prefix+"/time/")
+api.add_resource(Play,prefix+"/play/")
+api.add_resource(Pause,prefix+"/pause/")
+api.add_resource(Rooms,prefix+"/rooms/")
 
 #REST api to mess with individual rooms
-api.add_resource(Room, "/PTV/room/<int:id>")
+api.add_resource(Room, prefix+"/room/<int:id>")
 
 #Used by the theater software to establish a new room
-api.add_resource(RoomId,"/PTV/rooms/newid")
+api.add_resource(RoomId,prefix+"/rooms/newid")
 
 #Used by the hackweek app software to take over a new room
-api.add_resource(Host,"/PTV/room/<int:id>/host")
-api.add_resource(ChangeRoomStatus,"/PTV/room/<int:id>/status")
-api.add_resource(ChangeStreamURL,"/PTV/room/<int:id>/url")
+api.add_resource(Host,prefix+"/room/<int:id>/host")
+api.add_resource(ChangeRoomStatus,prefix+"/room/<int:id>/status")
+api.add_resource(ChangeStreamURL,prefix+"/room/<int:id>/url")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
