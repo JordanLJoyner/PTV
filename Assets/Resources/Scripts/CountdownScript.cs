@@ -60,11 +60,11 @@ public class CountdownScript : MonoBehaviour
     private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     private bool mUpdateServerTime = true;
-    private bool mAutoRandomizeContent = true;
     private bool mPaused = false;
 
     private bool mMusicEnabled = false;
     [SerializeField] private bool m_SkipBumps = false;
+    [SerializeField] private bool mAutoRandomizeContent = true;
 
     // Start is called before the first frame update
     void Start() {

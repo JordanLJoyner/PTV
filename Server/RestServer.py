@@ -151,18 +151,6 @@ class Time(Resource):
         mTime = args["TimeLeft"]
         return mTime + " registered", serverSuccessCode
 
-class Start(Resource):
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("Shows")
-        args = parser.parse_args()
-        showNames = args["Shows"];
-        print(showNames)
-        print(videoSeries)
-        requestMessage = {"MessageType": "START", "Data": showNames }
-        messageQueue.append(requestMessage)
-        return "Request to start with " + args["Shows"] + " logged", serverSuccessCode;
-
 class Play(Resource):
     def post(self):
         emote_message = {"MessageType": "PLAY"}
@@ -336,7 +324,7 @@ class Host(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("name")
         parser.add_argument("firebaseid")
-        parser.add_argument("Shows")
+        parser.add_argument("shows")
         args = parser.parse_args()
         room["name"] = args["name"]
         room["firebaseid"] = args["firebaseid"]
@@ -373,7 +361,6 @@ api.add_resource(Schedule,"/PTV/schedule/")
 api.add_resource(Emote,"/PTV/emote/")
 api.add_resource(Request,"/PTV/request/")
 api.add_resource(Time,"/PTV/time/")
-api.add_resource(Start,"/PTV/start/")
 api.add_resource(Play,"/PTV/play/")
 api.add_resource(Pause,"/PTV/pause/")
 api.add_resource(Rooms,"/PTV/rooms/")
@@ -385,7 +372,8 @@ api.add_resource(Room, "/PTV/room/<int:id>")
 api.add_resource(RoomId,"/PTV/rooms/newid")
 
 #Used by the hackweek app software to take over a new room
-api.add_resource(Host,"/PTV/host/room/<int:id>")
+api.add_resource(Host,"/PTV/room/<int:id>/host")
+api.add_resource(ChangeRoomStatus,"/PTV/room/<int:id>/status")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
