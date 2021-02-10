@@ -45,3 +45,12 @@ public class SaveDataItem {
         lastWatchedEpisode = episode;
     }
 }
+
+[System.Serializable]
+public class TheaterSettings {
+    public string musicDirectory;
+    public string bumpDirectory;
+    public string restServerUrl;
+    public int restServerPort;
+
+}

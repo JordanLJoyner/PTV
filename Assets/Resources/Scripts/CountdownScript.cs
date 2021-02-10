@@ -85,8 +85,16 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void LoadSettings() {
-        mMusicDirectory = "D:/Music/PTV";
-        mBumpDirectory = "D:/PTV/Bumps";
+        var settings = FileUtils.LoadSettings();
+        if (!settings.musicDirectory.Equals("")) {
+            mMusicDirectory = settings.musicDirectory;
+        }
+
+        if (!settings.bumpDirectory.Equals("")) {
+            mBumpDirectory = settings.bumpDirectory;
+        }
+        //mMusicDirectory = "D:/Music/PTV";
+        //mBumpDirectory = "D:/PTV/Bumps";
     }
 
     private void LoadVideos() {

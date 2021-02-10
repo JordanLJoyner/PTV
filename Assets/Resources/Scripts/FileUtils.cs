@@ -48,6 +48,15 @@ public class FileUtils {
         return JsonUtility.FromJson<Schedule>(json);
     }
 
+    public static TheaterSettings LoadSettings() {
+        string path = Application.streamingAssetsPath + "/Settings.json";
+        string json = ReadFromFile(path);
+        if (json == "") {
+            return null;
+        }
+        return JsonUtility.FromJson<TheaterSettings>(json);
+    }
+
     public static VideoSeries[] LoadSeriesData() {
         string path = Application.streamingAssetsPath + "/Series/SeriesInfo.json";
         string str = "";
