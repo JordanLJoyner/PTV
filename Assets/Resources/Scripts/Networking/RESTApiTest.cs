@@ -55,6 +55,8 @@ public class RESTApiTest : MonoBehaviour {
     private string mSeriesString = "";
     private bool mQueryMessageQueue = true;
     private bool mInitialConnection = true;
+    private bool mStartedCleanUp = false;
+    private bool mCleanupComplete = false;
 
     // Start is called before the first frame update
     void Start() {
@@ -63,12 +65,17 @@ public class RESTApiTest : MonoBehaviour {
         if (!settings.restServerUrl.Equals("")) {
             mBaseURL = settings.restServerUrl;
         }
+        Application.wantsToQuit += OnQuitIncoming;
+        SetSeriesData();
 
+        StartCoroutine(StartRequestingMessageQueue());
+        StartCoroutine(GetRoomId());
+    }
+
+    private void SetSeriesData() {
         var seriesData = FileUtils.LoadSeriesData();
         var seriesDict = new Dictionary<String, List<string>>();
         string seriesString = "";
-        Application.wantsToQuit += OnQuitIncoming;
-
         foreach (VideoSeries series in seriesData) {
             List<string> filePathsForSeries = new List<string>();
             FileUtils.FindAllFilesForPath(ref filePathsForSeries, series.FilePath);
@@ -76,9 +83,8 @@ public class RESTApiTest : MonoBehaviour {
             seriesString += series.Name + '\n';
         }
         mSeriesString = seriesString;
-        StartCoroutine(UpdateOnServer(mBaseURL+mPortNumber+ mServerPrefix + "/series/","series_list", seriesString));
-        StartCoroutine(StartRequestingMessageQueue());
-        StartCoroutine(GetRoomId());
+        //string t = mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix();
+        //StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix() + "/series/", "series_list", seriesString));
     }
 
     private void Update() {
@@ -141,7 +147,7 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     public static IEnumerator UpdateScheduleOnServer(List<string> schedule) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
+        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix() + "/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
@@ -165,6 +171,7 @@ public class RESTApiTest : MonoBehaviour {
     private void CreateAvailableRoomOnServer() {
         ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0,"Unclear", mSeriesString);
         StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
+        
     }
 
     IEnumerator GetFromServer(string uri, Action<string> onServerResponse) {
@@ -247,22 +254,24 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     private bool OnQuitIncoming() {
-        if (!startedCleanUp) {
+        if (!mStartedCleanUp) {
             StartCoroutine(CleanupRoom());
         }
-        return cleanupComplete;
+        return mCleanupComplete;
     }
 
-    private bool startedCleanUp = false;
-    private bool cleanupComplete = false;
+    private static string getRoomPrefix() {
+        return "/room/" + mRoomId.ToString();
+    }
+
     //When we're shutting down clean up our id on the server
     private IEnumerator CleanupRoom() {
-        startedCleanUp = true;
+        mStartedCleanUp = true;
         if (mRoomId > -1) {
             Debug.Log("Destroy id: " + mRoomId.ToString() + " on the server");
-            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber +  mServerPrefix + "/room/" + mRoomId.ToString());
+            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber +  mServerPrefix + getRoomPrefix());
         }
-        cleanupComplete = true;
+        mCleanupComplete = true;
         Application.Quit();
     }
 }

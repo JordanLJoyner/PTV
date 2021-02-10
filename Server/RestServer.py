@@ -11,40 +11,50 @@ app = Flask(__name__)
 CORS(app)
 api = Api(app)
 
-videoSeries = ""
-active_series = ""
-up_next = ""
-messageQueue = []
 serverErrorCode = 404
 serverSuccessCode = 200
+STATUS_FIELD = "status"
+STATUS_AVAILABLE = "available"
+STATUS_BUSY = "busy"
+STATUS_PLAYING = "playing"
+
+videoSeries = ""
+messageQueue = []
+mSongName = "No song registered"
+mShowName = "No show registered"
+mTime = ""
+
+mRoomId = 1
+mRooms = [
+	#Example room
+    {
+        "name": "JTown",
+        "theater_name": "jordan's computer",
+        "url": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
+        "id": 0,
+        "viewers": 0,
+        "current_show": "Batman Beyond",
+        "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
+        "status": "available",
+    	"firebaseid": "firebase1",
+    	"schedule": {}
+    }
+]
 
 class Series(Resource):
-    def post(self):
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("series_list")
         args = parser.parse_args()
         print(args["series_list"])
-        global videoSeries
-        videoSeries = args["series_list"]
+        room = getRoomForId(id)
+        room["series"] = args["series_list"]
         return "posted", serverSuccessCode
 
-    def get(self):
+    def get(self, id):
         print("fetching series")
-        return videoSeries, serverSuccessCode
-
-class Schedule(Resource):
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("active_series")
-        parser.add_argument("up_next")
-        args = parser.parse_args()
-        active_series = args["active_series"]
-        up_next = args["up_next"]
-        print(args)
-        return "updated", serverSuccessCode
-
-    def get(self):
-        return videoSeries, serverSuccessCode
+        room = getRoomForId(id)
+        return room["series"], serverSuccessCode
 
 class Util(Resource):
     def get(self):
@@ -85,19 +95,16 @@ class Emote(Resource):
 class Request(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("ShowName")
+        parser.add_argument("showName")
         args = parser.parse_args()
-        showName = args["ShowName"];
+        showName = args["showName"];
         print(showName)
-        print(videoSeries)
         if showName in videoSeries:
             requestMessage = {"MessageType": "REQUEST", "Data": showName }
             messageQueue.append(requestMessage)
             return "Request for " + args["ShowName"] + " logged", serverSuccessCode;        
         else:
             return "Could not find a matching show for " + showName, serverErrorCode
-
-mSongName = "No song registered"
 
 class Song(Resource):        
     def get(self):
@@ -110,7 +117,6 @@ class Song(Resource):
         mSongName = args["SongName"]
         return mSongName + " registered", serverSuccessCode
  
-mShowName = "No show registered"
 class Show(Resource):        
     def get(self):
         return mShowName, 200
@@ -122,22 +128,21 @@ class Show(Resource):
         mShowName = args["ShowName"]
         return mShowName + " registered", serverSuccessCode
 
-mSchedule = {}
 class Schedule(Resource):        
-    def get(self):
-        if(mSchedule == {}):
+    def get(self, id):
+        room = getRoomForId(id)
+        if(room['schedule'] == {} or room['schedule'] == None):
             return "Not set", serverErrorCode
-        return mSchedule, serverSuccessCode
-    def post(self):
+        return room['schedule'], serverSuccessCode
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("Schedule")
         args = parser.parse_args()
-        global mSchedule
         print(args["Schedule"])
-        mSchedule = args["Schedule"]
-        return "scheduled registered", serverSuccessCode
+        room = getRoomForId(id)
+        room['schedule'] = args["Schedule"]
+        return "schedule registered", serverSuccessCode
 
-mTime = ""
 class Time(Resource):        
     def get(self):
         if mTime == "":
@@ -190,26 +195,6 @@ users = [
         "occupation": "Web Engineer"
     }
 ]
-
-mRoomId = 1
-mRooms = [
-    {
-        "name": "JTown",
-        "theater_name": "jordan's computer",
-        "url": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
-        "id": 0,
-        "viewers": 0,
-        "current_show": "Batman Beyond",
-        "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
-        "status": "available",
-    	"firebaseid": "firebase1"
-    }
-]
-
-STATUS_FIELD = "status"
-STATUS_AVAILABLE = "available"
-STATUS_BUSY = "busy"
-STATUS_PLAYING = "playing"
 
 class Rooms(Resource):
     def get(self):
@@ -330,8 +315,7 @@ class Host(Resource):
         room["firebaseid"] = args["firebaseid"]
         room[STATUS_FIELD] = STATUS_PLAYING
         showNames = args["shows"];
-        print(showNames)
-        print(videoSeries)
+        print("Requested Host with \n"+showNames)
         requestMessage = {"MessageType": "START", "Data": showNames }
         messageQueue.append(requestMessage)
         return  "Hosting started", serverSuccessCode;  
@@ -362,18 +346,25 @@ class ChangeStreamURL(Resource):
 #api.add_resource(Util, "/Util/")
 
 prefix = "/PTV"
-api.add_resource(Series,prefix+"/series/")
+roomPrefix = "/room/<int:id>"
+totalRoomPrefix = prefix + roomPrefix
+
+api.add_resource(Series,totalRoomPrefix+"/series/")
+
 api.add_resource(PTVMessageQueue,"/PTVMessageQueue/")
+
 api.add_resource(SkipShow,prefix+"/SkipShow/")
 api.add_resource(VetoShow,prefix+"/Veto/")
 api.add_resource(Song,prefix+"/song/")
 api.add_resource(Show,prefix+"/show/")
-api.add_resource(Schedule,prefix+"/schedule/")
+
+api.add_resource(Schedule,totalRoomPrefix+"/schedule/")
 api.add_resource(Emote,prefix+"/emote/")
 api.add_resource(Request,prefix+"/request/")
 api.add_resource(Time,prefix+"/time/")
 api.add_resource(Play,prefix+"/play/")
 api.add_resource(Pause,prefix+"/pause/")
+
 api.add_resource(Rooms,prefix+"/rooms/")
 
 #REST api to mess with individual rooms
@@ -383,9 +374,9 @@ api.add_resource(Room, prefix+"/room/<int:id>")
 api.add_resource(RoomId,prefix+"/rooms/newid")
 
 #Used by the hackweek app software to take over a new room
-api.add_resource(Host,prefix+"/room/<int:id>/host")
-api.add_resource(ChangeRoomStatus,prefix+"/room/<int:id>/status")
-api.add_resource(ChangeStreamURL,prefix+"/room/<int:id>/url")
+api.add_resource(Host,totalRoomPrefix+"/host")
+api.add_resource(ChangeRoomStatus,totalRoomPrefix+"/status")
+api.add_resource(ChangeStreamURL,totalRoomPrefix+"/url")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
