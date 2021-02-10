@@ -8,7 +8,7 @@ public class DisplaySeriesScript : MonoBehaviour
     public GridLayoutGroup existingSeriesGrid;
     public GameObject existingSeriesButtonPrefab;
     public delegate void OnVideoSeriesSelected(VideoSeries v);
-    Dictionary<VideoSeries, ExistingSeriesButtonScript> mSeriesButtonDictionary = new Dictionary<VideoSeries, ExistingSeriesButtonScript>();
+    Dictionary<string, ExistingSeriesButtonScript> mSeriesButtonDictionary = new Dictionary<string, ExistingSeriesButtonScript>();
     OnVideoSeriesSelected mClickCallback;
 
     private void Start() {
@@ -22,7 +22,7 @@ public class DisplaySeriesScript : MonoBehaviour
         GameObject newSeriesButton = Instantiate(existingSeriesButtonPrefab, existingSeriesGrid.transform);
         ExistingSeriesButtonScript script = newSeriesButton.GetComponent<ExistingSeriesButtonScript>();
         script.setup(series, OnVideoSeriesButtonClicked);
-        mSeriesButtonDictionary.Add(series, script);
+        mSeriesButtonDictionary.Add(series.Name, script);
     }
 
 
@@ -37,6 +37,6 @@ public class DisplaySeriesScript : MonoBehaviour
     }
 
     public void UpdateName(VideoSeries s, string newName) {
-        mSeriesButtonDictionary[s].ButtonText.text = newName;
+        mSeriesButtonDictionary[s.Name].ButtonText.text = newName;
     }
 }
