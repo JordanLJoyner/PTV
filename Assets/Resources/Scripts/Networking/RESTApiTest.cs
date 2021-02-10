@@ -24,16 +24,16 @@ public class ServerRoom {
     public string url;
     public int id;
     public int viewers;
-    public string current_show;
+    public string current_show = "no show registered";
     public string series;
     public string status;
+    public string song_name = "no song registered";
 
-    public ServerRoom(string name, string url, int id, int viewers, string current_show, string series) {
+    public ServerRoom(string name, string url, int id, int viewers, string series) {
         this.theater_name = name;
         this.url = url;
         this.id = id;
         this.viewers = viewers;
-        this.current_show = current_show;
         this.series = series;
         this.status = RESTApiTest.STATUS_AVAILABLE;
     }
@@ -138,16 +138,20 @@ public class RESTApiTest : MonoBehaviour {
         }
     }
 
+    private static string getFullRoomUrl() {
+        return mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix();
+    } 
+
     public static IEnumerator UpdateSongOnServer(string songName) {
-        yield return UpdateOnServer(mBaseURL+ mPortNumber + mServerPrefix + "/song/","SongName",songName);
+        yield return UpdateOnServer(getFullRoomUrl() + "/song/","SongName",songName);
     }
 
     public static IEnumerator UpdateShowOnServer(string showName) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/show/", "ShowName", showName);
+        yield return UpdateOnServer(getFullRoomUrl() + "/show/", "ShowName", showName);
     }
 
     public static IEnumerator UpdateScheduleOnServer(List<string> schedule) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix() + "/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
+        yield return UpdateOnServer(getFullRoomUrl() + "/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
@@ -169,9 +173,12 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     private void CreateAvailableRoomOnServer() {
-        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0,"Unclear", mSeriesString);
+        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0, mSeriesString);
         StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
-        
+        if (mInitialConnection) {
+            mInitialConnection = false;
+            //countdownScript.OnInitialServerConnection();
+        }
     }
 
     IEnumerator GetFromServer(string uri, Action<string> onServerResponse) {
@@ -186,12 +193,7 @@ public class RESTApiTest : MonoBehaviour {
                 mQueryMessageQueue = false;
                 StartCoroutine(TryToReconnectToServer());
             } else {
-                if (mInitialConnection) {
-                    mInitialConnection = false;
-                    countdownScript.OnInitialServerConnection();
-                }
                 //Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
-                
                 onServerResponse?.Invoke(webRequest.downloadHandler.text);
             }
         }

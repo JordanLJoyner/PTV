@@ -20,8 +20,6 @@ STATUS_PLAYING = "playing"
 
 videoSeries = ""
 messageQueue = []
-mSongName = "No song registered"
-mShowName = "No show registered"
 mTime = ""
 
 mRoomId = 1
@@ -36,6 +34,7 @@ mRooms = [
         "current_show": "Batman Beyond",
         "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
         "status": "available",
+        "song_name": "No song registered",
     	"firebaseid": "firebase1",
     	"schedule": {}
     }
@@ -107,26 +106,30 @@ class Request(Resource):
             return "Could not find a matching show for " + showName, serverErrorCode
 
 class Song(Resource):        
-    def get(self):
-        return mSongName, serverSuccessCode
-    def post(self):
+    def get(self,id):
+        room = getRoomForId(id)
+        return room["song_name"], serverSuccessCode
+    def post(self,id):
         parser = reqparse.RequestParser()
         parser.add_argument("SongName")
         args = parser.parse_args()
-        global mSongName
-        mSongName = args["SongName"]
-        return mSongName + " registered", serverSuccessCode
+        room = getRoomForId(id)
+        print(room)
+        room["song_name"] = args["SongName"]
+        return room["song_name"] + " registered", serverSuccessCode
  
 class Show(Resource):        
-    def get(self):
-        return mShowName, 200
-    def post(self):
+    def get(self, id):
+        room = getRoomForId(id)
+        return room["current_show"], 200
+    def post(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument("ShowName")
         args = parser.parse_args()
-        global mShowName
-        mShowName = args["ShowName"]
-        return mShowName + " registered", serverSuccessCode
+        room = getRoomForId(id)
+        print(room)
+        room["current_show"] = args["ShowName"]
+        return room["current_show"] + " registered", serverSuccessCode
 
 class Schedule(Resource):        
     def get(self, id):
@@ -355,8 +358,8 @@ api.add_resource(PTVMessageQueue,"/PTVMessageQueue/")
 
 api.add_resource(SkipShow,prefix+"/SkipShow/")
 api.add_resource(VetoShow,prefix+"/Veto/")
-api.add_resource(Song,prefix+"/song/")
-api.add_resource(Show,prefix+"/show/")
+api.add_resource(Song,totalRoomPrefix+"/song/")
+api.add_resource(Show,totalRoomPrefix+"/show/")
 
 api.add_resource(Schedule,totalRoomPrefix+"/schedule/")
 api.add_resource(Emote,prefix+"/emote/")
