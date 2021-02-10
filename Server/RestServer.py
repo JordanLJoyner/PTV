@@ -32,8 +32,6 @@ class Series(Resource):
         print("fetching series")
         return videoSeries, serverSuccessCode
 
-
-
 class Schedule(Resource):
     def post(self):
         parser = reqparse.RequestParser()
@@ -209,12 +207,14 @@ mRoomId = 1
 mRooms = [
     {
         "name": "JTown",
+        "theater_name": "jordan's computer",
         "url": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
         "id": 0,
         "viewers": 0,
         "current_show": "Batman Beyond",
         "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
-        "status": "available"
+        "status": "available",
+    	"firebaseid": "firebase1"
     }
 ]
 
@@ -261,17 +261,6 @@ class Room(Resource):
     def get(self, id):
         return getRoomForId(id), serverSuccessCode
 
-    def put(self, id):
-        room = getRoomForId(id)
-        parser = reqparse.RequestParser()
-        parser.add_argument(STATUS_FIELD)
-        args = parser.parse_args()
-        newStatus = args[STATUS_FIELD]
-        print(newStatus)
-        print(room)
-        room[STATUS_FIELD] = newStatus
-        return "Updated " + str(room), serverSuccessCode
-        
     def delete(self, id):
         roomToRemove = getRoomForId(id)
         print("ID to remove: " + str(id))
@@ -341,9 +330,39 @@ class User(Resource):
         users = [user for user in users if user["name"] != name]
         return "{} is deleted.".format(name), 200
 
+class Host(Resource):
+    def post(self, id):
+        room = getRoomForId(id)
+        parser = reqparse.RequestParser()
+        parser.add_argument("name")
+        parser.add_argument("firebaseid")
+        parser.add_argument("Shows")
+        args = parser.parse_args()
+        room["name"] = args["name"]
+        room["firebaseid"] = args["firebaseid"]
+        room[STATUS_FIELD] = STATUS_PLAYING
+        showNames = args["Shows"];
+        print(showNames)
+        print(videoSeries)
+        requestMessage = {"MessageType": "START", "Data": showNames }
+        messageQueue.append(requestMessage)
+        return  "Hosting started", serverSuccessCode;  
 
-api.add_resource(User, "/user/<string:name>")
-api.add_resource(Util, "/Util/")
+class ChangeRoomStatus(Resource):
+    def put(self, id):
+        room = getRoomForId(id)
+        parser = reqparse.RequestParser()
+        parser.add_argument(STATUS_FIELD)
+        args = parser.parse_args()
+        newStatus = args[STATUS_FIELD]
+        print(newStatus)
+        print(room)
+        room[STATUS_FIELD] = newStatus
+        return "Updated " + str(room), serverSuccessCode
+#left here for reference
+#api.add_resource(User, "/user/<string:name>")
+#api.add_resource(Util, "/Util/")
+
 api.add_resource(Series,"/PTV/series/")
 api.add_resource(PTVMessageQueue,"/PTVMessageQueue/")
 api.add_resource(SkipShow,"/PTV/SkipShow/")
@@ -358,8 +377,15 @@ api.add_resource(Start,"/PTV/start/")
 api.add_resource(Play,"/PTV/play/")
 api.add_resource(Pause,"/PTV/pause/")
 api.add_resource(Rooms,"/PTV/rooms/")
+
+#REST api to mess with individual rooms
 api.add_resource(Room, "/PTV/room/<int:id>")
+
+#Used by the theater software to establish a new room
 api.add_resource(RoomId,"/PTV/rooms/newid")
+
+#Used by the hackweek app software to take over a new room
+api.add_resource(Host,"/PTV/host/room/<int:id>")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
