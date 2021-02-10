@@ -45,6 +45,7 @@ public class RESTApiTest : MonoBehaviour {
     public CountdownScript countdownScript;
     private static string mBaseURL = "http://127.0.0.1";
     private static string mPortNumber = ":5000";
+    private static string mServerPrefix = "/PTV";
 
     public static int mRoomId = -1;
     public static string STATUS_AVAILABLE = "available";
@@ -75,7 +76,7 @@ public class RESTApiTest : MonoBehaviour {
             seriesString += series.Name + '\n';
         }
         mSeriesString = seriesString;
-        StartCoroutine(UpdateOnServer(mBaseURL+mPortNumber+"/PTV/series/","series_list", seriesString));
+        StartCoroutine(UpdateOnServer(mBaseURL+mPortNumber+ mServerPrefix + "/series/","series_list", seriesString));
         StartCoroutine(StartRequestingMessageQueue());
         StartCoroutine(GetRoomId());
     }
@@ -132,24 +133,24 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     public static IEnumerator UpdateSongOnServer(string songName) {
-        yield return UpdateOnServer(mBaseURL+ mPortNumber+"/PTV/song/","SongName",songName);
+        yield return UpdateOnServer(mBaseURL+ mPortNumber + mServerPrefix + "/song/","SongName",songName);
     }
 
     public static IEnumerator UpdateShowOnServer(string showName) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/show/", "ShowName", showName);
+        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/show/", "ShowName", showName);
     }
 
     public static IEnumerator UpdateScheduleOnServer(List<string> schedule) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
+        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/schedule/", "Schedule", JsonHelper.ToJson<string>(schedule.ToArray()));
     }
 
     public static IEnumerator UpdateTimeOnServer(string timeRemaining) {
-        yield return UpdateOnServer(mBaseURL + mPortNumber+"/PTV/time/", "TimeLeft", timeRemaining);
+        yield return UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/time/", "TimeLeft", timeRemaining);
     }
 
     private IEnumerator GetRoomId() {
         yield return new WaitForSeconds(0.1f);
-        yield return GetFromServer(mBaseURL + mPortNumber+"/PTV/rooms/newid", OnRoomIdReceived);
+        yield return GetFromServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/newid", OnRoomIdReceived);
     }
 
     private void OnRoomIdReceived(string value) {
@@ -163,7 +164,7 @@ public class RESTApiTest : MonoBehaviour {
 
     private void CreateAvailableRoomOnServer() {
         ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0,"Unclear", mSeriesString);
-        StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber+"/PTV/rooms/", "room",JsonUtility.ToJson(thisRoom)));
+        StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
     }
 
     IEnumerator GetFromServer(string uri, Action<string> onServerResponse) {
@@ -198,7 +199,7 @@ public class RESTApiTest : MonoBehaviour {
 
     IEnumerator StartRequestingMessageQueue() {
         while (mQueryMessageQueue) {
-            yield return GetFromServer(mBaseURL + mPortNumber+"/PTVMessageQueue/", OnMessageQueueReceived);
+            yield return GetFromServer(mBaseURL + mPortNumber + "/PTVMessageQueue/", OnMessageQueueReceived);
             yield return new WaitForSeconds(1.0f);
         }
     }
@@ -259,7 +260,7 @@ public class RESTApiTest : MonoBehaviour {
         startedCleanUp = true;
         if (mRoomId > -1) {
             Debug.Log("Destroy id: " + mRoomId.ToString() + " on the server");
-            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber + "/PTV/room/" + mRoomId.ToString());
+            yield return DeleteTheaterRoomOnServer(mBaseURL + mPortNumber +  mServerPrefix + "/room/" + mRoomId.ToString());
         }
         cleanupComplete = true;
         Application.Quit();
