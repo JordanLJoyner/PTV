@@ -1,6 +1,6 @@
 {
 	"musicDirectory":"D:/Music/PTV",
 	"bumpDirectory": "D:/PTV/Bumps",
-	"restServerUrl": "",
-	"restServerPort": 5000
+	"restServerUrl": "https://watch-together-hack.herokuapp.com",
+	"restServerPort": ""
 }

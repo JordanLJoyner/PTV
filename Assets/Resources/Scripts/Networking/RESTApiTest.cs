@@ -62,7 +62,11 @@ public class RESTApiTest : MonoBehaviour {
     // Start is called before the first frame update
     void Start() {
         var settings = FileUtils.LoadSettings();
-        mPortNumber = ":"+settings.restServerPort.ToString();
+        if (!settings.restServerPort.Equals("")) {
+            mPortNumber = ":" + settings.restServerPort.ToString();
+        } else {
+            mPortNumber = "";
+        }
         if (!settings.restServerUrl.Equals("")) {
             mBaseURL = settings.restServerUrl;
         }
