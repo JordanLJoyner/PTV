@@ -26,9 +26,8 @@ public class CountdownScript : MonoBehaviour
     public TextMeshProUGUI reminderText;
     public TextMeshProUGUI EventText;
     public UIParticleSystem uiParticleSystem;
-    [SerializeField] private bool m_SkipBumps = false;
 
-    private List<AudioClip> musicFiles = new List<AudioClip>();
+    private List<AudioClip> mMusicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
     private List<string> ptvBumpFilePaths = new List<string>();    
     private int mVideoIndex = 0;
@@ -37,7 +36,7 @@ public class CountdownScript : MonoBehaviour
     private bool mFiredAlmostComplete = false;
     private Action mQueuedPostLogoAction = null;
     private string mMusicDirectory = "";
-    private const string mBumpDirectory = "D:/PTV/Bumps";
+    private string mBumpDirectory = "";
 
     private enum eTVState {
         UNSET,
@@ -65,6 +64,7 @@ public class CountdownScript : MonoBehaviour
     private bool mPaused = false;
 
     private bool mMusicEnabled = false;
+    [SerializeField] private bool m_SkipBumps = false;
 
     // Start is called before the first frame update
     void Start() {
@@ -86,6 +86,7 @@ public class CountdownScript : MonoBehaviour
 
     private void LoadSettings() {
         mMusicDirectory = "D:/Music/PTV";
+        mBumpDirectory = "D:/PTV/Bumps";
     }
 
     private void LoadVideos() {
@@ -177,27 +178,34 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void LoadBumps() {
-        musicFiles.Clear();
         string bumpDirectory = mBumpDirectory;
         List<string> bumpFileNames = new List<string>();
+        if(bumpDirectory == null || bumpDirectory.Equals("")) {
+            m_SkipBumps = true;
+            return;
+        }
         var info = new DirectoryInfo(bumpDirectory);
         if (!info.Exists) {
             Debug.LogError("No bump directory found");
+            m_SkipBumps = true;
             return;
         }
         FileUtils.FindAllFilesForPath(ref ptvBumpFilePaths, bumpDirectory);
+        if(ptvBumpFilePaths.Count == 0) {
+            m_SkipBumps = true;
+        }
         //var info = new DirectoryInfo(Application.dataPath + "/Resources/Bumps/Random Bumps");
         //var files = info.GetFiles();
         //foreach (FileInfo file in files) {
         //    if (!file.Name.Contains(".meta")) {
         //        randomBumpFilePaths.Add(file.Name);
         //    }
-       //}
+        //}
     }
 
     #region Music
     private void LoadMusic() {
-        musicFiles.Clear();
+        mMusicFiles.Clear();
         string directoryName = mMusicDirectory;
         if (directoryName == null || directoryName.Equals("")) {
             return;
@@ -222,7 +230,7 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void PullUpNextTrack() {
-        if(musicFiles.Count >= musicFilePaths.Count) {
+        if(mMusicFiles.Count >= musicFilePaths.Count) {
             mLoadedAllMusicTracks = true;
             return;
         }
@@ -236,7 +244,7 @@ public class CountdownScript : MonoBehaviour
 
         //Stream the file in from our local storage
         AudioClip clp = new WWW("file:///" + fileName).GetAudioClip(false,true);
-        musicFiles.Add(clp);
+        mMusicFiles.Add(clp);
         musicFilePaths.RemoveAt(mMusicIndex);
     }
 
@@ -246,9 +254,9 @@ public class CountdownScript : MonoBehaviour
         }
         PullUpNextTrack();
         if (mLoadedAllMusicTracks) {
-            musicPlayer.clip = musicFiles[UnityEngine.Random.Range(0, musicFiles.Count)];
+            musicPlayer.clip = mMusicFiles[UnityEngine.Random.Range(0, mMusicFiles.Count)];
         } else {
-            musicPlayer.clip = musicFiles[musicFiles.Count - 1];
+            musicPlayer.clip = mMusicFiles[mMusicFiles.Count - 1];
         }
         musicPlayer.time = 20;
         musicPlayer.Play();
@@ -419,6 +427,7 @@ public class CountdownScript : MonoBehaviour
 
     private void OnCountdownComplete() {
         if (m_SkipBumps) {
+            TransitionOutOfCountdown();
             StartContentPlayback();
         } else {
             PlayPrerollBump();
@@ -480,17 +489,21 @@ public class CountdownScript : MonoBehaviour
     //****************
     //BUMP
     //****************
-    void PlayPrerollBump() {
+    void TransitionOutOfCountdown() {
         NextUpParent.SetActive(false);
         videoPlayer.enabled = true;
         scrimPanel.enabled = false;
         musicPlayer.Stop();
+        VisualizerParent.SetActive(false);
+        scheduleScript.HideSchedule();
+    }
+
+    void PlayPrerollBump() {
+        TransitionOutOfCountdown();
         PlayBumpAndLogo(OnLogoPrerollComplete);
     }
 
     void PlayBumpAndLogo(Action postLogoAction) {
-        VisualizerParent.SetActive(false);
-        scheduleScript.HideSchedule();
         state = eTVState.BUMP;
         bumpPlaybackStarted = false;
         videoPlayer.Stop();
@@ -575,7 +588,11 @@ public class CountdownScript : MonoBehaviour
             mVideoIndex = 0;
             ResetToEndOfStreamState();
         } else {
-            PlayBumpAndLogo(OnLogoPostRollComplete);
+            if (m_SkipBumps) {
+                OnLogoPostRollComplete();
+            } else {
+                PlayBumpAndLogo(OnLogoPostRollComplete);
+            }
         }
         UpdateTimeOnServer();
     }
