@@ -205,7 +205,7 @@ users = [
     }
 ]
 
-mRoomId = 0
+mRoomId = 1
 mRooms = [
     {
         "name": "JTown",
@@ -218,7 +218,12 @@ mRooms = [
     }
 ]
 
-class Room(Resource):
+STATUS_FIELD = "status"
+STATUS_AVAILABLE = "available"
+STATUS_BUSY = "busy"
+STATUS_PLAYING = "playing"
+
+class Rooms(Resource):
     def get(self):
         global mRooms
         return mRooms, serverSuccessCode   
@@ -230,10 +235,37 @@ class Room(Resource):
         print(args)
         print("\n\n")
         newRoom = args["room"]
+        if isinstance(newRoom,str):
+            newRoom = json.loads(newRoom)
         print(newRoom)
+        newRoom[STATUS_FIELD] = STATUS_AVAILABLE
         mRooms.append(newRoom)
         return "Added new room", serverSuccessCode
 
+def getRoomForId(id):
+    global mRooms
+    for room in mRooms:
+        roomJson = room
+        if roomJson["id"] == id:
+            if isinstance(roomJson,str):
+                room = json.loads(roomJson)
+            return room 
+    return None
+
+class Room(Resource):
+    def get(self, id):
+        return getRoomForId(id), serverSuccessCode
+
+    def put(self, id):
+        room = getRoomForId(id)
+        parser = reqparse.RequestParser()
+        parser.add_argument(STATUS_FIELD)
+        args = parser.parse_args()
+        newStatus = args[STATUS_FIELD]
+        print(newStatus)
+        print(room)
+        room[STATUS_FIELD] = newStatus
+        return "Updated " + str(room), serverSuccessCode
 #    def delete(self):
 #        global mRooms
 #        parser = reqparse.RequestParser()
@@ -333,7 +365,8 @@ api.add_resource(Time,"/PTV/time/")
 api.add_resource(Start,"/PTV/start/")
 api.add_resource(Play,"/PTV/play/")
 api.add_resource(Pause,"/PTV/pause/")
-api.add_resource(Room,"/PTV/rooms/")
+api.add_resource(Rooms,"/PTV/rooms/")
+api.add_resource(Room, "/PTV/room/<int:id>")
 api.add_resource(RoomId,"/PTV/rooms/newid")
 
 if __name__ == '__main__':
