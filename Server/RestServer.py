@@ -329,7 +329,7 @@ class Host(Resource):
         room["name"] = args["name"]
         room["firebaseid"] = args["firebaseid"]
         room[STATUS_FIELD] = STATUS_PLAYING
-        showNames = args["Shows"];
+        showNames = args["shows"];
         print(showNames)
         print(videoSeries)
         requestMessage = {"MessageType": "START", "Data": showNames }
