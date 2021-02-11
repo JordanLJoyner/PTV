@@ -19,7 +19,7 @@ public class ServerMessageBundle {
 
 [Serializable]
 public class ServerRoom {
-    public string name = "";
+    public string name = "available room";
     public string theater_name = "";
     public string url = "";
     public int id = -1;
@@ -29,6 +29,7 @@ public class ServerRoom {
     public string status = "";
     public string song_name = "no song registered";
     public string time = "";
+    public string owner = "";
 
     public ServerRoom(string name, string url, int id, int viewers, string series) {
         this.theater_name = name;
@@ -180,7 +181,8 @@ public class RESTApiTest : MonoBehaviour {
     private void CreateAvailableRoomOnServer() {
         var settings = FileUtils.LoadSettings();
         string streamUrl = settings.streamUrl;
-        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", streamUrl, mRoomId,0, mSeriesString);
+        string theaterName = settings.theaterName;
+        ServerRoom thisRoom = new ServerRoom(theaterName, streamUrl, mRoomId,0, mSeriesString);
         StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
         if (mInitialConnection) {
             mInitialConnection = false;

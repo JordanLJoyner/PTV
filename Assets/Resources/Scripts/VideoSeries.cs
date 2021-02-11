@@ -53,4 +53,5 @@ public class TheaterSettings {
     public string restServerUrl;
     public string restServerPort;
     public string streamUrl;
+    public string theaterName;
 }
