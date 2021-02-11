@@ -52,4 +52,5 @@ public class TheaterSettings {
     public string bumpDirectory;
     public string restServerUrl;
     public string restServerPort;
+    public string streamUrl;
 }

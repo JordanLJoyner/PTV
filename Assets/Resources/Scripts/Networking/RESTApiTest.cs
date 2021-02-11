@@ -178,7 +178,9 @@ public class RESTApiTest : MonoBehaviour {
     }
 
     private void CreateAvailableRoomOnServer() {
-        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8", mRoomId,0, mSeriesString);
+        var settings = FileUtils.LoadSettings();
+        string streamUrl = settings.streamUrl;
+        ServerRoom thisRoom = new ServerRoom("Jordan's Home PC", streamUrl, mRoomId,0, mSeriesString);
         StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
         if (mInitialConnection) {
             mInitialConnection = false;

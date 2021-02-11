@@ -2,5 +2,6 @@
 	"musicDirectory":"D:/Music/PTV",
 	"bumpDirectory": "D:/PTV/Bumps",
 	"restServerUrl": "http://127.0.0.1",
-	"restServerPort": "5000"
+	"restServerPort": "5000",
+	"streamUrl": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8"
 }
