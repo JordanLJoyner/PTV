@@ -85,7 +85,7 @@ public class RESTApiTest : MonoBehaviour {
             List<string> filePathsForSeries = new List<string>();
             FileUtils.FindAllFilesForPath(ref filePathsForSeries, series.FilePath);
             seriesDict.Add(series.Name, filePathsForSeries);
-            seriesString += series.Name + '\n';
+            seriesString += series.Name + ',';
         }
         mSeriesString = seriesString;
         //string t = mBaseURL + mPortNumber + mServerPrefix + getRoomPrefix();
@@ -257,6 +257,15 @@ public class RESTApiTest : MonoBehaviour {
                     break;
                 case "PAUSE":
                     countdownScript.OnPauseRequestFromServer();
+                    break;
+                case "FAST_FORWARD":
+                    countdownScript.OnFastForwardRequestFromServer();
+                    break;
+                case "REWIND":
+                    countdownScript.OnRewindRequestFromServer();
+                    break;
+                case "END":
+                    countdownScript.OnEndRequestFromServer();
                     break;
                 default:
                     break;

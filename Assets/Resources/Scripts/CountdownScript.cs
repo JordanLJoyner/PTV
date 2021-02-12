@@ -84,6 +84,16 @@ public class CountdownScript : MonoBehaviour
         StartCoroutine(StartServerTimeLoop());
     }
 
+    void ResetToPreHostedState() {
+        ResetToCountdownState(100);
+        videoPlayer.Stop();
+        musicPlayer.Stop();
+        StopAllCoroutines();
+        StartCoroutine(TriggerScrimFadeIn());
+        scheduleScript.HideSchedule();
+        state = eTVState.UNSET;
+    }
+
     private void LoadSettings() {
         var settings = FileUtils.LoadSettings();
         if (!settings.musicDirectory.Equals("")) {
@@ -320,6 +330,10 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void Update() {
+        if (Input.GetKeyDown(KeyCode.Equals)) {
+            ResetToPreHostedState();
+        }
+
         if(state == eTVState.UNSET) {
             if (Input.GetKeyDown(KeyCode.Q)) {
                 UpdateCurrentShowText();
@@ -373,6 +387,13 @@ public class CountdownScript : MonoBehaviour
                 SkipToEndOfPlayback();
             }
 
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+                Rewind();
+            }
+
+            if (Input.GetKeyDown(KeyCode.RightArrow)) {
+                FastForward();
+            }
             //Video just ended
             if (playbackStarted) {
                 if (!mPaused && !videoPlayer.isPlaying) {
@@ -635,6 +656,27 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    void Rewind() {
+        if(state != eTVState.PLAYBACK) {
+            return;
+        }
+        double rewindTime = videoPlayer.time - 30;
+        if(rewindTime < 0) {
+            rewindTime = 0;
+        }
+        videoPlayer.time = rewindTime;
+    }
+
+    void FastForward() {
+        if (state != eTVState.PLAYBACK) {
+            return;
+        }
+        double ffTime = videoPlayer.time + 30;
+        if (ffTime < videoPlayer.length) {
+            videoPlayer.time = ffTime;
+        }
+    }
+
     //****************
     //END PLAYBACK
     //****************
@@ -806,6 +848,22 @@ public class CountdownScript : MonoBehaviour
             mPaused = true;
             videoPlayer.Pause();
         }
+    }
+
+    public void OnRewindRequestFromServer() {
+        if(state == eTVState.PLAYBACK) {
+            Rewind();
+        }
+    }
+
+    public void OnFastForwardRequestFromServer() {
+        if (state == eTVState.PLAYBACK) {
+            FastForward();
+        }
+    }
+
+    public void OnEndRequestFromServer() {
+        ResetToPreHostedState();
     }
     //****************
     //END API RESPONSES

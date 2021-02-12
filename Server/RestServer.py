@@ -24,18 +24,19 @@ mRoomId = 1
 mRooms = [
 	#Example room
     {
-        "name": "JTown",
-        "theater_name": "jordan's computer",
+        "name": "Fake Example Room",
+        "theater_name": "the aetjer",
         "url": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
         "id": 0,
         "viewers": 0,
-        "current_show": "Batman Beyond",
+        "current_show": "A show",
         "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
         "status": "available",
         "song_name": "No song registered",
     	"firebaseid": "firebase1",
     	"schedule": {},
-    	"time": ""
+    	"time": "",
+        "owner": ""
     }
 ]
 messageQueue[0] = []
@@ -117,6 +118,28 @@ class Pause(Resource):
         emote_message = {"MessageType": "PAUSE"}
         messageQueue[id].append(emote_message)
         return "Pause request logged", serverSuccessCode
+
+class FastForward(Resource):
+    def post(self, id):
+        emote_message = {"MessageType": "FAST_FORWARD"}
+        messageQueue[id].append(emote_message)
+        return "FF request logged", serverSuccessCode
+
+class Rewind(Resource):
+    def post(self, id):
+        emote_message = {"MessageType": "REWIND"}
+        messageQueue[id].append(emote_message)
+        return "Rewind request logged", serverSuccessCode
+
+class End(Resource):
+    def post(self, id):
+        room = getRoomForId(id)
+        if room[STATUS_FIELD] != STATUS_PLAYING:
+            return "Tried to end a room that isn't playing", serverErrorCode
+        room[STATUS_FIELD] = STATUS_AVAILABLE
+        emote_message = {"MessageType": "END"}
+        messageQueue[id].append(emote_message)
+        return "End request logged", serverSuccessCode
 
 class Song(Resource):        
     def get(self,id):
@@ -312,14 +335,18 @@ class User(Resource):
 class Host(Resource):
     def post(self, id):
         room = getRoomForId(id)
+        if room[STATUS_FIELD] == STATUS_PLAYING:
+            return "Room already started", serverErrorCode
         parser = reqparse.RequestParser()
         parser.add_argument("name")
         parser.add_argument("firebaseid")
         parser.add_argument("shows")
+        parser.add_argument("owner")
         args = parser.parse_args()
         room["name"] = args["name"]
         room["firebaseid"] = args["firebaseid"]
         room[STATUS_FIELD] = STATUS_PLAYING
+        room["owner"] = args["owner"]
         showNames = args["shows"];
         print("Requested Host with \n"+showNames)
         requestMessage = {"MessageType": "START", "Data": showNames }
@@ -370,6 +397,9 @@ api.add_resource(Request,totalRoomPrefix+"/request/")
 api.add_resource(Time,totalRoomPrefix+"/time/")
 api.add_resource(Play,totalRoomPrefix+"/play/")
 api.add_resource(Pause,totalRoomPrefix+"/pause/")
+api.add_resource(FastForward,totalRoomPrefix+"/fastforward/")
+api.add_resource(Rewind,totalRoomPrefix+"/rewind/")
+api.add_resource(End,totalRoomPrefix+"/end/")
 
 api.add_resource(Rooms,prefix+"/rooms/")
 
