@@ -1,3 +1,315 @@
 {
-    "Items": []
+    "Items": [
+        {
+            "Name": "Jackie Chan Adventures",
+            "FilePath": "D:/Videos/TV/JACKIE CHAN Adventures (2000-2005) - The Complete TV Series, Season 1,2,3,4,5 S01-S05 - 480p Web-DL x264",
+            "Tags": [
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Batman Beyond",
+            "FilePath": "D:/Videos/TV/Batman Beyond",
+            "Tags": [
+                "DC​",
+                "Superhero​"
+            ]
+        },
+        {
+            "Name": "Medabots",
+            "FilePath": "D:/Videos/TV/Medabots (English Dub)",
+            "Tags": [
+                "Mecha​"
+            ]
+        },
+        {
+            "Name": "Outlaw Star",
+            "FilePath": "D:/Videos/Anime/Outlaw Star",
+            "Tags": [
+                "Anime​"
+            ]
+        },
+        {
+            "Name": "Gargoyles",
+            "FilePath": "D:/Videos/TV/Gargoyles - 3 seasons Complete",
+            "Tags": []
+        },
+        {
+            "Name": "Megas XLR",
+            "FilePath": "D:/Videos/TV/Megas XLR/Megas XLR",
+            "Tags": [
+                "Mecha​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Men In Black",
+            "FilePath": "D:/Videos/TV/Men In Black - Complete Series",
+            "Tags": []
+        },
+        {
+            "Name": "Billy And Mandy",
+            "FilePath": "D:/Videos/TV/Grim Adventures of Billy and Mandy, The - Seasons 1-7 + Extras/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Big O",
+            "FilePath": "D:/Videos/TV/The Big O",
+            "Tags": [
+                "Mecha​",
+                "Anime​",
+                "Superhero​"
+            ]
+        },
+        {
+            "Name": "Ed Edd & Eddy",
+            "FilePath": "D:/Videos/TV/Ed Edd n Eddy",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Dexter's Lab",
+            "FilePath": "D:/Videos/TV/DEXTERS LAB[SEASONS 1-5][VERIFIED-VIDZ]",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "90s X-men",
+            "FilePath": "D:/Videos/TV/X-Men Cartoon Complete Seasons 1-5",
+            "Tags": [
+                "Superhero​",
+                "Marvel​"
+            ]
+        },
+        {
+            "Name": "Samurai Jack",
+            "FilePath": "D:/Videos/TV/Samurai Jack/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Harvey Birdman",
+            "FilePath": "D:/Videos/TV/Harvey.Birdman.Attorney.At.Law.Complete.720P.WEB-DL.Retic1337",
+            "Tags": [
+                "Comedy​"
+            ]
+        },
+        {
+            "Name": "Daria",
+            "FilePath": "D:/Videos/TV/Daria",
+            "Tags": [
+                "ME_IRL​",
+                "Comedy​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Freakazoid",
+            "FilePath": "D:/Videos/TV/Freakazoid!",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Animaniacs",
+            "FilePath": "D:/Videos/TV/Animaniacs/Animaniacs (1993)",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Tiny Toon Adventures",
+            "FilePath": "D:/Videos/TV/Tiny Toon Adventures (1990)",
+            "Tags": [
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Dilbert",
+            "FilePath": "D:/Videos/TV/Dilbert",
+            "Tags": [
+                "Comedy​",
+                "ME_IRL​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Adventure Time",
+            "FilePath": "D:/Videos/TV/Adventure Time/Seasons",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​",
+                "Minisode​"
+            ]
+        },
+        {
+            "Name": "PowerPuff Girls",
+            "FilePath": "D:/Videos/TV/THE POWER PUFF GIRLS [COMPLETE][VERIFIED-VIDZ]/Seasons",
+            "Tags": [
+                "Minisode​",
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Invader Zim",
+            "FilePath": "D:/Videos/TV/Invader Zim DVD-RIPs by sNeK",
+            "Tags": [
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Teen Titans",
+            "FilePath": "D:/Videos/TV/Titans",
+            "Tags": [
+                "Superhero​",
+                "DC​",
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Courage the Cowardly Dog",
+            "FilePath": "D:/Videos/TV/Courage.The.Cowardly.Dog.S01 - S04.WEB-DL.AAC2.0.H264-Reaperza",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Twilight Zone",
+            "FilePath": "D:/Videos/TV/The Twilight Zone Complete 156 Episodes XVID",
+            "Tags": [
+                "Live Action​"
+            ]
+        },
+        {
+            "Name": "Chowder",
+            "FilePath": "D:/Videos/TV/Chowder - The complete series",
+            "Tags": [
+                "Cartoon​",
+                "Episodic​",
+                "Cartoon Network​"
+            ]
+        },
+        {
+            "Name": "Escaflowne",
+            "FilePath": "D:/Videos/TV/[AHQ] Vision of Escaflowne 1-26+movie",
+            "Tags": [
+                "Anime​",
+                "Mecha​"
+            ]
+        },
+        {
+            "Name": "Donkey Kong Country",
+            "FilePath": "D:/Videos/TV/DonkeyKongCountryAnimatedTVSeries",
+            "Tags": [
+                "CGI​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Transformers Beast Wars",
+            "FilePath": "D:/Videos/TV/Transformers Beast Wars",
+            "Tags": [
+                "CGI​",
+                "Episodic​"
+            ]
+        },
+        {
+            "Name": "Duck Dodgers",
+            "FilePath": "D:/Videos/TV/Duck Dodgers",
+            "Tags": [
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Duckman",
+            "FilePath": "D:/Videos/TV/ DuckMan",
+            "Tags": [
+                "Cartoon​",
+                "Comedy​",
+                "ME_IRL​"
+            ]
+        },
+        {
+            "Name": "Aladdin Series",
+            "FilePath": "D:/Videos/TV/Aladdin Complete Series",
+            "Tags": [
+                "Cartoon​",
+                "Disney​"
+            ]
+        },
+        {
+            "Name": "Digimon",
+            "FilePath": "D:/Videos/TV/Digimon",
+            "Tags": [
+                "Cartoon​",
+                "Anime​"
+            ]
+        },
+        {
+            "Name": "Hercules",
+            "FilePath": "D:/Videos/TV/Disney's Hercules 1998 Season 1 Complete WEB x264 [i_c]",
+            "Tags": [
+                "Disney​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Venture Brothers",
+            "FilePath": "D:/Videos/TV/The Venture Bros. (Seasons 1-6 +Commentary) [480p] [DVD] [1080p] [BD] [HEVC] [x265] [Batch] [pseudo]",
+            "Tags": [
+                "Cartoon Network​",
+                "Episodic​",
+                "Cartoon​"
+            ]
+        },
+        {
+            "Name": "Loonatics Unleashed",
+            "FilePath": "D:/Videos/TV/Loonatics Unleashed",
+            "Tags": [
+                "Cartoon​",
+                "Superhero​",
+                "WB​"
+            ]
+        },
+        {
+            "Name": "Dragonball",
+            "FilePath": "D:/Videos/TV/Dragonball Complete Saga HD/Season 1 Dragonball",
+            "Tags": [
+                "Anime​"
+            ]
+        },
+        {
+            "Name": "Swat Kats",
+            "FilePath": "D:/Videos/TV/(1993-1995) Swat Kats x264 480p",
+            "Tags": [
+                "Cartoon​",
+                "Superhero​"
+            ]
+        },
+        {
+            "Name": "Sentai Ryusolger",
+            "FilePath": "D:\\Videos\\Japanese\\Sentai\\Zyuden Sentai Kyoryuger",
+            "Tags": []
+        }
+    ]
 }

@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>PTV</string>
     <key>CFBundleGetInfoString</key>
-    <string>Unity Player version 2019.4.4f1 (1f1dac67805b). (c) 2020 Unity Technologies ApS. All rights reserved.</string>
+    <string>Unity Player version 2020.2.3f1 (8ff31bc5bf5b). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
     <key>CFBundleIconFile</key>
     <string>PlayerIcon.icns</string>
     <key>CFBundleIdentifier</key>
@@ -29,7 +29,7 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.games</string>
     <key>LSMinimumSystemVersion</key>
-    <string>10.9.0</string>
+    <string>10.13.0</string>
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>
@@ -40,6 +40,6 @@
     <key>NSPrincipalClass</key>
     <string>PlayerApplication</string>
     <key>UnityBuildNumber</key>
-    <string>1f1dac67805b</string>
+    <string>8ff31bc5bf5b</string>
   </dict>
 </plist>

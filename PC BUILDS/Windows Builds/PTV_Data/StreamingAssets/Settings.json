@@ -1,1 +1,8 @@
-{"musicDirectory":"D:/Music/PTV","bumpDirectory":"D:/PTV/Bumps","restServerUrl":"https://watch-together-hack.herokuapp.com","restServerPort":"","streamUrl":"https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8","theaterName":"jordan main pc"}
+{
+	"musicDirectory":"D:/Music/PTV",
+	"bumpDirectory": "D:/PTV/Bumps",
+	"restServerUrl": "https://watch-together-hack.herokuapp.com",
+	"restServerPort": "",
+	"streamUrl": "https://content.jwplatform.com/manifests/Y5UQq0fG.m3u8",
+	"theaterName": "jordan main pc"
+}
