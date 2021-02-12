@@ -348,7 +348,7 @@ class Host(Resource):
         room[STATUS_FIELD] = STATUS_PLAYING
         room["owner"] = args["owner"]
         showNames = args["shows"];
-        print("Requested Host with \n"+showNames)
+        print("Requested Host with \n"+str(showNames))
         requestMessage = {"MessageType": "START", "Data": showNames }
         messageQueue[id].append(requestMessage)
         return  "Hosting started", serverSuccessCode;  

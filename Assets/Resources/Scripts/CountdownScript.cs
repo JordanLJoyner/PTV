@@ -26,6 +26,7 @@ public class CountdownScript : MonoBehaviour
     public TextMeshProUGUI reminderText;
     public TextMeshProUGUI EventText;
     public UIParticleSystem uiParticleSystem;
+    [SerializeField] private TextMeshProUGUI m_PausedDisplayText;
 
     private List<AudioClip> mMusicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
@@ -65,7 +66,6 @@ public class CountdownScript : MonoBehaviour
     private bool mMusicEnabled = false;
     [SerializeField] private bool m_SkipBumps = false;
     [SerializeField] private bool mAutoRandomizeContent = true;
-
     // Start is called before the first frame update
     void Start() {
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
@@ -838,7 +838,11 @@ public class CountdownScript : MonoBehaviour
     }
 
     public void OnPlayRequestFromServer() {
-        if(state == eTVState.PLAYBACK) {
+        m_PausedDisplayText?.gameObject.SetActive(false);
+        if (state == eTVState.PLAYBACK) {
+            if(mPaused) {
+                mPaused = false;
+            }
             videoPlayer.Play();
         }
     }
@@ -846,6 +850,7 @@ public class CountdownScript : MonoBehaviour
     public void OnPauseRequestFromServer() {
         if(state == eTVState.PLAYBACK) {
             mPaused = true;
+            m_PausedDisplayText?.gameObject.SetActive(true);
             videoPlayer.Pause();
         }
     }
