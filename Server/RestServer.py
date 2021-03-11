@@ -9,6 +9,7 @@ import json
 
 app = Flask(__name__)
 CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 api = Api(app)
 
 serverErrorCode = 404
@@ -266,9 +267,9 @@ class Room(Resource):
         roomToRemove = getRoomForId(id)
         print("ID to remove: " + str(id))
         if roomToRemove != None:
-	        print("Removing Room: " + str(id))
-	        global mRooms
-	        mRooms.remove(roomToRemove)
+            print("Removing Room: " + str(id))
+            global mRooms
+            mRooms.remove(roomToRemove)
 
 class RoomId(Resource):
     def get(self):
@@ -347,6 +348,7 @@ class Host(Resource):
         room["firebaseid"] = args["firebaseid"]
         room[STATUS_FIELD] = STATUS_PLAYING
         room["owner"] = args["owner"]
+        room["viewers"] = 0
         showNames = args["shows"];
         print("Requested Host with \n"+str(showNames))
         requestMessage = {"MessageType": "START", "Data": showNames }
@@ -374,6 +376,24 @@ class ChangeStreamURL(Resource):
         newUrl = args["url"]
         room["url"] = newUrl
         return str(id) + " now has stream url " + str(newUrl), serverSuccessCode        
+
+class AddViewer(Resource):
+    def post(self, id):
+        room = getRoomForId(id)
+        room["viewers"] = room["viewers"]+1
+        return serverSuccessCode
+
+class LoseViewer(Resource):
+    def post(self, id):
+        room = getRoomForId(id)
+        if room["viewers"] - 1 >= 0:
+            room["viewers"] = room["viewers"]-1
+        return serverSuccessCode
+
+class Viewers(Resource):
+    def get(self, id):
+        room = getRoomForId(id)
+        return room["viewers"], serverSuccessCode
 #left here for reference
 #api.add_resource(User, "/user/<string:name>")
 #api.add_resource(Util, "/Util/")
@@ -413,6 +433,15 @@ api.add_resource(RoomId,prefix+"/rooms/newid")
 api.add_resource(Host,totalRoomPrefix+"/host")
 api.add_resource(ChangeRoomStatus,totalRoomPrefix+"/status")
 api.add_resource(ChangeStreamURL,totalRoomPrefix+"/url")
+
+api.add_resource(AddViewer, totalRoomPrefix+"/addviewer")
+api.add_resource(LoseViewer, totalRoomPrefix+"/loseviewer")
+api.add_resource(Viewers, totalRoomPrefix+"/viewers")
+
+# A welcome message to test our server  
+@app.route('/') 
+def index():    
+    return "<h1>Welcome to our WTHack REST API!</h1>"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
