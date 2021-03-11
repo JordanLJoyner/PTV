@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 public class BuildScheduleScript : MonoBehaviour {
     public DisplaySeriesScript mDisplaySeriesScript;
@@ -17,6 +18,19 @@ public class BuildScheduleScript : MonoBehaviour {
     // Start is called before the first frame update
     void Start() {
         mDisplaySeriesScript.SetButtonClickCallback(OnSeriesClicked);
+        Schedule schedule = FileUtils.LoadSchedule();
+        mScheduleType = schedule.scheduleType;
+        VideoSeries[] seriesData = FileUtils.LoadSeriesData();
+        foreach (var item in schedule.items) {
+            string seriesName = item.showName;
+            foreach(VideoSeries s in seriesData) {
+                if (s.Name.Equals(seriesName)) {
+                    OnSeriesClicked(s);
+                    break;
+                }
+            }
+        }
+        
         UpdateScheduleText();
     }
 
@@ -67,5 +81,16 @@ public class BuildScheduleScript : MonoBehaviour {
         #if UNITY_EDITOR
                 UnityEditor.AssetDatabase.Refresh();
         #endif
+    }
+
+    public void _OnBackToStartingSceneClicked() {
+        SceneManager.LoadScene("StartingScene");
+    }
+
+    public void _OnClearScheduleClicked() {
+        foreach(var button in mSeriesButtons) {
+            Destroy(button.gameObject);
+        }
+        mSeriesButtons.Clear();
     }
 }

@@ -15,4 +15,8 @@ public class StartingSceneScript : MonoBehaviour
     public void _OnChangeSettingsClicked() {
         SceneManager.LoadScene("SettingsScene");
     }
+
+    public void _OnScheduleBuilderClicked() {
+        SceneManager.LoadScene("ScheduleBuilder");
+    }
 }

@@ -39,10 +39,10 @@ public class Schedule {
 [System.Serializable]
 public class SaveDataItem { 
     public string showName;
-    public string lastWatchedEpisode;
-    public SaveDataItem(string show, string episode) {
+    public int nextEpisodeIndex;
+    public SaveDataItem(string show, int episode) {
         showName = show;
-        lastWatchedEpisode = episode;
+        nextEpisodeIndex = episode;
     }
 }
 

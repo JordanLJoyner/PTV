@@ -14,13 +14,7 @@ public class SettingsParentScript : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI m_BumpDirectory;
     
     private void Start() {
-        TheaterSettings settings = FileUtils.LoadSettings();
-        m_MusicDirectory.text = settings.musicDirectory;
-        m_BumpDirectory.text = settings.bumpDirectory;
-        m_ServerPort.text = settings.restServerPort;
-        m_ServerUrl.text = settings.restServerUrl;
-        m_StreamUrl.text = settings.streamUrl;
-        m_TheaterName.text = settings.theaterName;
+        LoadSettings(FileUtils.LoadSettings());
     }
 
     public void _OnSaveClicked() {
@@ -32,6 +26,23 @@ public class SettingsParentScript : MonoBehaviour {
         settings.streamUrl = m_StreamUrl.text;
         settings.theaterName = m_TheaterName.text;
         FileUtils.SaveSettings(settings);
+    }
+
+    private void LoadSettings(TheaterSettings settings) {
+        m_MusicDirectory.text = settings.musicDirectory;
+        m_BumpDirectory.text = settings.bumpDirectory;
+        m_ServerPort.text = settings.restServerPort;
+        m_ServerUrl.text = settings.restServerUrl;
+        m_StreamUrl.text = settings.streamUrl;
+        m_TheaterName.text = settings.theaterName;
+    }
+
+    public void _OnLoadLocalHostSettingsClicked() {
+        LoadSettings(FileUtils.LoadSettings(FileUtils.eSettingsType.LOCAL_HOST));
+    }
+
+    public void _OnLoadPTVSettingsClicked() {
+        LoadSettings(FileUtils.LoadSettings(FileUtils.eSettingsType.PTV));
     }
 
     public void _OnStartingSceneClicked() {

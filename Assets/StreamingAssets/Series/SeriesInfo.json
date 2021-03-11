@@ -17,7 +17,7 @@
         },
         {
             "Name": "Medabots",
-            "FilePath": "D:/Videos/TV/Medabots (English Dub)",
+            "FilePath": "D:\\Videos\\Anime\\Medabots (English Dub)",
             "Tags": [
                 "Mecha​"
             ]
@@ -57,7 +57,7 @@
         },
         {
             "Name": "Big O",
-            "FilePath": "D:/Videos/TV/The Big O",
+            "FilePath": "D:\\Videos\\Anime\\The Big O",
             "Tags": [
                 "Mecha​",
                 "Anime​",
@@ -259,7 +259,7 @@
         },
         {
             "Name": "Digimon",
-            "FilePath": "D:/Videos/TV/Digimon",
+            "FilePath": "D:\\Videos\\Anime\\Digimon",
             "Tags": [
                 "Cartoon​",
                 "Anime​"
@@ -308,8 +308,24 @@
         },
         {
             "Name": "Sentai Ryusolger",
-            "FilePath": "D:\\Videos\\Japanese\\Sentai\\Zyuden Sentai Kyoryuger",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Sentai\\Dinoknight Sentai Ryusoulger",
             "Tags": []
+        },
+        {
+            "Name": "Kyoruger",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Sentai\\Zyuden Sentai Kyoryuger",
+            "Tags": [
+                "Superhero​",
+                "Live Action​"
+            ]
+        },
+        {
+            "Name": "Zegapain",
+            "FilePath": "D:\\Videos\\Anime\\Zegapain",
+            "Tags": [
+                "Mecha​",
+                "Anime​"
+            ]
         }
     ]
 }

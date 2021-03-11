@@ -27,6 +27,8 @@ public class CountdownScript : MonoBehaviour
     public TextMeshProUGUI EventText;
     public UIParticleSystem uiParticleSystem;
     [SerializeField] private TextMeshProUGUI m_PausedDisplayText;
+    [SerializeField] private GameObject m_AdminControls;
+    [SerializeField] private GameObject m_PtvBumpText;
 
     private List<AudioClip> mMusicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
@@ -51,7 +53,7 @@ public class CountdownScript : MonoBehaviour
     private bool playbackStarted = false;
     private bool bumpPlaybackStarted = false;
     private bool mLoadedAllMusicTracks = false;
-    private int preshowWait = 80;
+    private int preshowWait = 100;
     private int mTimeBetweenShowWait = 180;
     private float mMaxVolume = 1.0f;
     private string mSongName = "Unset";
@@ -62,10 +64,11 @@ public class CountdownScript : MonoBehaviour
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
     private bool mUpdateServerTime = true;
     private bool mPaused = false;
+    private Schedule mSchedule;
 
     private bool mMusicEnabled = false;
     [SerializeField] private bool m_SkipBumps = false;
-    [SerializeField] private bool mAutoRandomizeContent = true;
+    [SerializeField] private bool mRunLocally = true;
     // Start is called before the first frame update
     void Start() {
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
@@ -75,7 +78,7 @@ public class CountdownScript : MonoBehaviour
         LoadBumps();
         LoadVideos();
 
-        if (mAutoRandomizeContent) {
+        if (mRunLocally) {
             UpdateCurrentShowText();
             UpdateScheduleScript();
             ResetToCountdownState(preshowWait);
@@ -107,6 +110,45 @@ public class CountdownScript : MonoBehaviour
         //mBumpDirectory = "D:/PTV/Bumps";
     }
 
+    private void LoadSequentialSchedule(Schedule schedule) {
+        mSaveData = FileUtils.LoadSaveData();
+        Dictionary<string, List<int>> queuedEpisodes = new Dictionary<string, List<int>>();
+        for (int i = 0; i < schedule.items.Count; i++) {
+            string showName = schedule.items[i].showName;
+            int episodeIndex = 0;
+            bool foundSaveData = false;
+            foreach (SaveDataItem item in mSaveData) {
+                if (item.showName.Equals(showName)) {
+                    episodeIndex = item.nextEpisodeIndex;
+                    //we've already started queueing this show, pull up the following episode
+                    if (queuedEpisodes.ContainsKey(showName)) {
+                        var episodeQueue = queuedEpisodes[showName];
+                        int nextEpisodeIndex = episodeQueue[episodeQueue.Count - 1];
+                        if (nextEpisodeIndex >= mSeriesDict[showName].Count) {
+                            nextEpisodeIndex = 0;
+                        }
+                        episodeIndex = nextEpisodeIndex;
+                    }
+                    foundSaveData = true;
+                    break;
+                }
+            }
+            if (!foundSaveData) {
+                SaveDataItem newSaveData = new SaveDataItem(showName, 0);
+                mSaveData.Add(newSaveData);
+            }
+            if (queuedEpisodes.ContainsKey(showName)) {
+                if (queuedEpisodes[showName].Contains(episodeIndex)) {
+                    episodeIndex++;
+                }
+            } else {
+                List<int> list = new List<int>();
+                queuedEpisodes.Add(showName, list);
+            }
+            mVideoFilePathsFound.Add(mSeriesDict[showName][episodeIndex]);
+            queuedEpisodes[showName].Add(episodeIndex);
+        }
+    }
     private void LoadVideos() {
         void RandomizeFilePaths() {
             //Randomize the file paths
@@ -118,8 +160,10 @@ public class CountdownScript : MonoBehaviour
             }
         }
         //Load the schedule
+        mSchedule = FileUtils.LoadSchedule();
         Schedule schedule = FileUtils.LoadSchedule();
-       
+        
+
         var seriesData = FileUtils.LoadSeriesData();
         foreach (VideoSeries series in seriesData) {
             List<string> filePathsForSeries = new List<string>();
@@ -129,10 +173,7 @@ public class CountdownScript : MonoBehaviour
 
         switch (schedule.scheduleType) {
             case ScheduleType.SEQUENTIAL:
-                mSaveData = FileUtils.LoadSaveData();
-                for (int i = 0; i < schedule.items.Count; i++) {
-                    mVideoFilePathsFound.Add(mSeriesDict[schedule.items[i].showName][0]);
-                }
+                LoadSequentialSchedule(schedule);
                 break;
             case ScheduleType.SCHEDULED_BUT_RANDOM_EPISODE:
                 for (int i = 0; i < schedule.items.Count; i++) {
@@ -330,8 +371,12 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void Update() {
-        if (Input.GetKeyDown(KeyCode.Equals)) {
-            ResetToPreHostedState();
+        if (Input.GetKeyDown(KeyCode.Tab)) {
+            m_AdminControls.SetActive(!m_AdminControls.activeSelf);
+        }
+
+        if (Input.GetKeyDown(KeyCode.H)) {
+            FindSeriesForShow(mCurrentShowText);
         }
 
         if(state == eTVState.UNSET) {
@@ -515,6 +560,30 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    private string FindSeriesForShow(string episodeToFindSeriesFor) {
+        foreach(String key in mSeriesDict.Keys) {
+            List<string> episodeList = mSeriesDict[key];
+            foreach(String episode in episodeList) {
+                string niceEpisodeName = GetEpisodeNameFromPath(episode);
+                if (episodeToFindSeriesFor.Equals(niceEpisodeName)) {
+                    return key;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void UpdateSaveData(String series) {
+        if(mSchedule.scheduleType == ScheduleType.SEQUENTIAL) {
+            foreach (var saveData in mSaveData) {
+                if (saveData.showName.Equals(series)) {
+                    saveData.nextEpisodeIndex++;
+                    break;
+                }
+            }
+            FileUtils.WriteSaveData(mSaveData);
+        }
+    }
     //****************
     //BUMP
     //****************
@@ -534,6 +603,9 @@ public class CountdownScript : MonoBehaviour
 
     void PlayBumpAndLogo(Action postLogoAction) {
         state = eTVState.BUMP;
+        if (m_PtvBumpText != null) {
+            m_PtvBumpText?.SetActive(true);
+        }
         bumpPlaybackStarted = false;
         videoPlayer.Stop();
         if (ptvBumpFilePaths.Count > 0) {
@@ -554,6 +626,10 @@ public class CountdownScript : MonoBehaviour
     void OnBumpCompleted() {
         state = eTVState.LOGO;
         videoPlayer.enabled = false;
+        if(m_PtvBumpText != null) {
+            m_PtvBumpText?.SetActive(false);
+        }
+
         //play the bump sound effects
         mLogoScript.PlayLogo(mQueuedPostLogoAction);
     }
@@ -604,7 +680,15 @@ public class CountdownScript : MonoBehaviour
     private void CompletedShowPlayback() {
         //Stop the subtitles
         //StopSubtitles();
+        //Update the save data (if relevant)
+        string completedSeries = FindSeriesForShow(mCurrentShowText);
+        UpdateSaveData(completedSeries);
+
+        //Update the server
         StartCoroutine(RESTApiTest.UpdateShowOnServer(mNextShowText));
+
+        //Update our UI
+        videoPlayer.Stop();
         playbackLogo.gameObject.SetActive(false);
 
         //Stop the server time countdown and update server time so it's empty again
@@ -656,6 +740,10 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    public void _OnRewindClicked() {
+        Rewind();
+    }
+
     void Rewind() {
         if(state != eTVState.PLAYBACK) {
             return;
@@ -665,6 +753,10 @@ public class CountdownScript : MonoBehaviour
             rewindTime = 0;
         }
         videoPlayer.time = rewindTime;
+    }
+
+    public void _OnFastForwardClicked() {
+        FastForward();
     }
 
     void FastForward() {

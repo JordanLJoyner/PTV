@@ -2,7 +2,19 @@
     "Items": [
         {
             "showName": "Jackie Chan Adventures",
-            "lastWatchedEpisode": "D:\\Videos\\TV\\JACKIE CHAN Adventures (2000-2005) - The Complete TV Series, Season 1,2,3,4,5 S01-S05 - 480p Web-DL x264\\Season 1 (2000-01)\\Jackie Chan Adventures - S01 E01 - The Dark Hand (480p - Web-DL).mp4"
+            "nextEpisodeIndex": 0
+        },
+        {
+            "showName": "Sentai Ryusolger",
+            "nextEpisodeIndex": 8
+        },
+        {
+            "showName": "Kyoruger",
+            "nextEpisodeIndex": 27
+        },
+        {
+            "showName": "Medabots",
+            "nextEpisodeIndex": 4
         }
     ]
 }

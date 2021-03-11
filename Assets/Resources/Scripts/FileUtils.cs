@@ -49,8 +49,30 @@ public class FileUtils {
     }
 
     private static string mSettingsFileName = "/Settings.json";
+    private static string mSettingsLocalHostFileName = "/LocalhostServerSettings.json";
+    private static string mSettingsPTVFileName = "/PTVServerSettings.json";
+    public enum eSettingsType {
+        DEFAULT,
+        LOCAL_HOST,
+        PTV
+    }
     public static TheaterSettings LoadSettings() {
-        string path = Application.streamingAssetsPath + mSettingsFileName;
+        return LoadSettings(eSettingsType.DEFAULT);
+    }
+    public static TheaterSettings LoadSettings(eSettingsType eSettings) {
+        string settingsFile = mSettingsFileName;
+        switch (eSettings) {
+            case eSettingsType.LOCAL_HOST:
+                settingsFile = mSettingsLocalHostFileName;
+                break;
+            case eSettingsType.PTV:
+                settingsFile = mSettingsPTVFileName;
+                break;
+            default:
+                settingsFile = mSettingsFileName;
+                break;
+        }
+        string path = Application.streamingAssetsPath + settingsFile;
         string json = ReadFromFile(path);
         if (json == "") {
             return null;
