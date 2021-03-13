@@ -370,7 +370,88 @@ public class CountdownScript : MonoBehaviour
         return returnVal;
     }
 
+    public class VotingBlock {
+        [SerializeField] private TextMeshProUGUI m_LabelText;
+        [SerializeField] private TextMeshProUGUI m_VoteText;
+        public void Init(string label, int index) {
+            m_LabelText.text = "Option " + index.ToString() + ": " + label;
+            UpdateVoteText(0);
+        }
+        public void UpdateVoteText(int newValue) {
+            m_VoteText.text = "- " + newValue.ToString() + " Votes";
+        }
+    }
+
+    public class VotingScript {
+        [SerializeField] private GameObject m_VotingBlockPrefab;
+        [SerializeField] private GameObject m_VotingGrid;
+        List<VotingStruct> mVotingTri = new List<VotingStruct>();
+
+        private class VotingStruct {
+            public VotingBlock mVotingBlock;
+            public string mName;
+            public int mCurrentVotes;
+            public VotingStruct(VotingBlock block, string name) {
+                mName = name;
+                mVotingBlock = block;
+                mCurrentVotes = 0;
+            }
+        }
+
+        public void StartVote(List<string> voteOptions) {
+            for (int i=0; i < voteOptions.Count;i++){
+                string voteOption = voteOptions[i];
+                GameObject newVoteBlock = Instantiate(m_VotingBlockPrefab, m_VotingGrid.transform);
+                VotingBlock block = newVoteBlock.GetComponent<VotingBlock>();
+                block.Init(voteOption, i);
+                mVotingTri.Add(new VotingStruct(block, voteOption));
+            }
+        }
+
+        public void RegisterVote(int index) {
+            if(mVotingTri.Count == 0) {
+                return;
+            }
+            mVotingTri[index].mVotingBlock.UpdateVoteText(mVotingTri[index].mCurrentVotes);
+        }
+
+        public void RegisterVote(string itemName) {
+            for(int i=0; i < mVotingTri.Count; i++) {
+                if (mVotingTri[i].mName.Equals(itemName)) {
+                    RegisterVote(i);
+                    break;
+                }
+            }
+        }
+
+        public string GetVoteWinner() {
+            if(mVotingTri.Count == 0) {
+                return "Voting didn't start";
+            }
+            int currentHighestVotes = 0;
+            List<int> indexesWithHighestVotes = new List<int>();
+            for (int i = 0; i < mVotingTri.Count; i++) {
+                int currentVotes = mVotingTri[i].mCurrentVotes;
+                if(currentVotes > currentHighestVotes) {
+                    indexesWithHighestVotes.Clear();
+                }
+                if(currentVotes >= currentHighestVotes) {
+                    currentHighestVotes = currentVotes;
+                    indexesWithHighestVotes.Add(i);
+                }
+            }
+            int chosenIndex = UnityEngine.Random.Range(0, indexesWithHighestVotes.Count);
+            return mVotingTri[chosenIndex].mName;
+        }
+    }
+    VotingScript mVotingScript;
+
     private void Update() {
+        if (Input.GetKeyDown(KeyCode.Alpha1)) {
+            Debug.Log("Vote 1");
+            mVotingScript.RegisterVote(1);
+        }
+
         if (Input.GetKeyDown(KeyCode.Tab)) {
             m_AdminControls.SetActive(!m_AdminControls.activeSelf);
         }
