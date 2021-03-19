@@ -28,7 +28,12 @@ public class CountdownScript : MonoBehaviour
     public UIParticleSystem uiParticleSystem;
     [SerializeField] private TextMeshProUGUI m_PausedDisplayText;
     [SerializeField] private GameObject m_AdminControls;
-    [SerializeField] private GameObject m_PtvBumpText;
+
+    [Header("Bump stuff")]
+    [SerializeField] private GameObject m_BumpParent;
+    [SerializeField] private SlideInScript m_LeftBumpSlider;
+    [SerializeField] private SlideInScript m_RightBumpSlider;
+    [SerializeField] private RenderTexture m_BumpTargetRenderTexture;
 
     private List<AudioClip> mMusicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
@@ -684,11 +689,14 @@ public class CountdownScript : MonoBehaviour
 
     void PlayBumpAndLogo(Action postLogoAction) {
         state = eTVState.BUMP;
-        if (m_PtvBumpText != null) {
-            m_PtvBumpText?.SetActive(true);
-        }
         bumpPlaybackStarted = false;
         videoPlayer.Stop();
+        videoPlayer.renderMode = VideoRenderMode.RenderTexture;
+        videoPlayer.targetTexture = m_BumpTargetRenderTexture;
+        m_BumpParent.SetActive(true);
+        m_LeftBumpSlider.SlideIn();
+        m_RightBumpSlider.SlideIn();
+
         if (ptvBumpFilePaths.Count > 0) {
             int bumpIndex = UnityEngine.Random.Range(0, ptvBumpFilePaths.Count);
             string fileName = ptvBumpFilePaths[bumpIndex];
@@ -706,10 +714,9 @@ public class CountdownScript : MonoBehaviour
 
     void OnBumpCompleted() {
         state = eTVState.LOGO;
+        m_BumpParent.SetActive(false);
         videoPlayer.enabled = false;
-        if(m_PtvBumpText != null) {
-            m_PtvBumpText?.SetActive(false);
-        }
+        videoPlayer.renderMode = VideoRenderMode.CameraNearPlane;
 
         //play the bump sound effects
         mLogoScript.PlayLogo(mQueuedPostLogoAction);

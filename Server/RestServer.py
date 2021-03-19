@@ -34,12 +34,12 @@ mRooms = [
         "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
         "status": "available",
         "song_name": "No song registered",
-    	"firebaseid": "firebase1",
-    	"schedule": {},
-    	"time": "",
+     	"firebaseid": "firebase1",
+     	"schedule": {},
+     	"time": "",
         "owner": ""
     }
-]
+    ]
 messageQueue[0] = []
 
 class Series(Resource):
