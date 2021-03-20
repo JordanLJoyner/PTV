@@ -322,7 +322,9 @@ public class CountdownScript : MonoBehaviour
         } else {
             musicPlayer.clip = mMusicFiles[mMusicFiles.Count - 1];
         }
-        musicPlayer.time = 20;
+        if(musicPlayer.clip.length > 120) {
+            musicPlayer.time = 20;
+        }
         musicPlayer.Play();
         StartCoroutine(SongSkipTimer());
         songTitleText.text = mSongName;
