@@ -155,9 +155,10 @@ public class OpenFileDialogScript : MonoBehaviour
 
     public void _UpdateSeries() {
         VideoSeries s = mSeries[mCurrentlySelectedSeries];
+        string oldName = s.Name;
         s.Name = NameEditText.text;
         s.FilePath = ChosenPathText.text;
-        mDisplaySeriesScript.UpdateName(s, s.Name);
+        mDisplaySeriesScript.UpdateName(oldName, s.Name);
     }
 
     public void _SaveItemInfo() {

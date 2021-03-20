@@ -35,6 +35,15 @@ public class CountdownScript : MonoBehaviour
     [SerializeField] private SlideInScript m_RightBumpSlider;
     [SerializeField] private RenderTexture m_BumpTargetRenderTexture;
 
+    [Header("Voting")]
+    [SerializeField] VotingScript mVotingScript;
+    [SerializeField] private GameObject m_DraftUi;
+    bool mDraftMode = false;
+
+    [Header("Quick Settings")]
+    [SerializeField] private bool m_SkipBumps = false;
+    [SerializeField] private bool mRunLocally = true;
+
     private List<AudioClip> mMusicFiles = new List<AudioClip>();
     private List<string> musicFilePaths = new List<string>();
     private List<string> ptvBumpFilePaths = new List<string>();    
@@ -63,7 +72,6 @@ public class CountdownScript : MonoBehaviour
     private float mMaxVolume = 1.0f;
     private string mSongName = "Unset";
 
-    private string mFilesFound = "";
     private List<string> mVideoFilePathsFound = new List<string>();
     private List<SaveDataItem> mSaveData = new List<SaveDataItem>();
     Dictionary<String, List<string>> mSeriesDict = new Dictionary<String, List<string>>();
@@ -72,8 +80,7 @@ public class CountdownScript : MonoBehaviour
     private Schedule mSchedule;
 
     private bool mMusicEnabled = false;
-    [SerializeField] private bool m_SkipBumps = false;
-    [SerializeField] private bool mRunLocally = true;
+
     // Start is called before the first frame update
     void Start() {
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
@@ -236,6 +243,9 @@ public class CountdownScript : MonoBehaviour
 
     private string GetEpisodeNameFromPath(string fullPath) {
         int lastSlash = fullPath.LastIndexOf('\\');
+        if(lastSlash == -1) {
+            return fullPath;
+        }
         lastSlash++;
         int lastDot = fullPath.LastIndexOf('.');
         return fullPath.Substring(lastSlash, (lastDot - lastSlash));
@@ -377,94 +387,9 @@ public class CountdownScript : MonoBehaviour
         return returnVal;
     }
 
-    public class VotingBlock {
-        [SerializeField] private TextMeshProUGUI m_LabelText;
-        [SerializeField] private TextMeshProUGUI m_VoteText;
-        public void Init(string label, int index) {
-            m_LabelText.text = "Option " + index.ToString() + ": " + label;
-            UpdateVoteText(0);
-        }
-        public void UpdateVoteText(int newValue) {
-            m_VoteText.text = "- " + newValue.ToString() + " Votes";
-        }
-    }
-
-    public class VotingScript {
-        [SerializeField] private GameObject m_VotingBlockPrefab;
-        [SerializeField] private GameObject m_VotingGrid;
-        List<VotingStruct> mVotingTri = new List<VotingStruct>();
-
-        private class VotingStruct {
-            public VotingBlock mVotingBlock;
-            public string mName;
-            public int mCurrentVotes;
-            public VotingStruct(VotingBlock block, string name) {
-                mName = name;
-                mVotingBlock = block;
-                mCurrentVotes = 0;
-            }
-        }
-
-        public void StartVote(List<string> voteOptions) {
-            for (int i=0; i < voteOptions.Count;i++){
-                string voteOption = voteOptions[i];
-                GameObject newVoteBlock = Instantiate(m_VotingBlockPrefab, m_VotingGrid.transform);
-                VotingBlock block = newVoteBlock.GetComponent<VotingBlock>();
-                block.Init(voteOption, i);
-                mVotingTri.Add(new VotingStruct(block, voteOption));
-            }
-        }
-
-        public void RegisterVote(int index) {
-            if(mVotingTri.Count == 0) {
-                return;
-            }
-            mVotingTri[index].mVotingBlock.UpdateVoteText(mVotingTri[index].mCurrentVotes);
-        }
-
-        public void RegisterVote(string itemName) {
-            for(int i=0; i < mVotingTri.Count; i++) {
-                if (mVotingTri[i].mName.Equals(itemName)) {
-                    RegisterVote(i);
-                    break;
-                }
-            }
-        }
-
-        public string GetVoteWinner() {
-            if(mVotingTri.Count == 0) {
-                return "Voting didn't start";
-            }
-            int currentHighestVotes = 0;
-            List<int> indexesWithHighestVotes = new List<int>();
-            for (int i = 0; i < mVotingTri.Count; i++) {
-                int currentVotes = mVotingTri[i].mCurrentVotes;
-                if(currentVotes > currentHighestVotes) {
-                    indexesWithHighestVotes.Clear();
-                }
-                if(currentVotes >= currentHighestVotes) {
-                    currentHighestVotes = currentVotes;
-                    indexesWithHighestVotes.Add(i);
-                }
-            }
-            int chosenIndex = UnityEngine.Random.Range(0, indexesWithHighestVotes.Count);
-            return mVotingTri[chosenIndex].mName;
-        }
-    }
-    VotingScript mVotingScript;
-
     private void Update() {
-        if (Input.GetKeyDown(KeyCode.Alpha1)) {
-            Debug.Log("Vote 1");
-            mVotingScript.RegisterVote(1);
-        }
-
         if (Input.GetKeyDown(KeyCode.Tab)) {
             m_AdminControls.SetActive(!m_AdminControls.activeSelf);
-        }
-
-        if (Input.GetKeyDown(KeyCode.H)) {
-            FindSeriesForShow(mCurrentShowText);
         }
 
         if(state == eTVState.UNSET) {
@@ -498,6 +423,27 @@ public class CountdownScript : MonoBehaviour
                 //volumeSlider.gameObject.SetActive(!volumeSlider.gameObject.activeSelf);
                 VetoNextShow();
             }
+
+            if (Input.GetKeyDown(KeyCode.Q)) {
+
+                List<string> options = new List<string>();
+                
+                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[0])));
+                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[1])));
+                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[2])));
+                mVotingScript.StartVote(options);
+            }
+
+            if (Input.GetKeyDown(KeyCode.W)) {
+                string winner = mVotingScript.GetVoteWinner();
+                Debug.Log("Vote Winner: " + winner);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha1)) {
+                Debug.Log("Vote 1");
+                mVotingScript.RegisterVote(1);
+            }
+            volumeSlider.gameObject.SetActive(true);
         } else {
             volumeSlider.gameObject.SetActive(false);
         }
@@ -539,6 +485,39 @@ public class CountdownScript : MonoBehaviour
             }
         }
     }
+
+    #region Drafting
+    private void StartDraft() {
+        mDraftMode = true;
+        m_DraftUi.SetActive(true);
+        List<string> options = new List<string>();
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[0])));
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[1])));
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[2])));
+        mVotingScript.StartVote(options);
+    }
+
+    private void CompleteDraftRound() {
+        m_DraftUi.SetActive(false);
+        string seriesName = mVotingScript.GetVoteWinner();
+        string filePath = GetRandomEpisodeForSeries(seriesName);
+        if(filePath == null) {
+            Debug.LogError("Could not find episode for series: " + seriesName);
+        } else {
+            mVideoFilePathsFound.Insert(mVideoIndex, filePath);
+        }
+    }
+
+    private string GetRandomEpisodeForSeries(string seriesName) {
+        if (mSeriesDict.ContainsKey(seriesName)) {
+            //Pull a random episode from the series
+            var showFilePaths = mSeriesDict[seriesName];
+            var randomEpisode = showFilePaths[UnityEngine.Random.Range(0, showFilePaths.Count)];
+            return randomEpisode;
+        }
+        return null;
+    }
+    #endregion
 
     void ResetToCountdownState(int countdownLength) {
         scheduleScript.ShowSchedule();
@@ -992,7 +971,6 @@ public class CountdownScript : MonoBehaviour
             } else {
                 Debug.LogError("Tried to pull a series that doesn't exist");
             }     
-            
         } else {
             Debug.Log("Tried to request a show outside of countdown state");
         }

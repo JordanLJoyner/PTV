@@ -11,15 +11,21 @@ public class DisplaySeriesScript : MonoBehaviour
     Dictionary<string, ExistingSeriesButtonScript> mSeriesButtonDictionary = new Dictionary<string, ExistingSeriesButtonScript>();
     private List<GameObject> mButtons = new List<GameObject>();
     OnVideoSeriesSelected mClickCallback;
+    VideoSeries mLastClickedSeries = null;
 
     private void Start() {
         //Make a button for all the series data
         foreach (var series in FileUtils.LoadSeriesData()) {
-            MakeSeriesButton(series);
+            MakeSeriesButtonInternal(series);
         }
     }
 
     public void MakeSeriesButton(VideoSeries series) {
+        MakeSeriesButtonInternal(series);
+        mLastClickedSeries = series;
+    }
+
+    private void MakeSeriesButtonInternal(VideoSeries series) {
         GameObject newSeriesButton = Instantiate(existingSeriesButtonPrefab, existingSeriesGrid.transform);
         ExistingSeriesButtonScript script = newSeriesButton.GetComponent<ExistingSeriesButtonScript>();
         script.setup(series, OnVideoSeriesButtonClicked);
@@ -33,13 +39,17 @@ public class DisplaySeriesScript : MonoBehaviour
     }
 
     public void OnVideoSeriesButtonClicked(VideoSeries s) {
+        mLastClickedSeries = s;
         if (mClickCallback != null) {
             mClickCallback(s);
         }
     }
 
-    public void UpdateName(VideoSeries s, string newName) {
-        mSeriesButtonDictionary[s.Name].ButtonText.text = newName;
+    public void UpdateName(string oldName, string newName) {
+        var temp = mSeriesButtonDictionary[oldName];
+        temp.ButtonText.text = newName;
+        mSeriesButtonDictionary.Remove(oldName);
+        mSeriesButtonDictionary.Add(newName, temp);
     }
 
     public void ClearSeries() {
@@ -48,5 +58,6 @@ public class DisplaySeriesScript : MonoBehaviour
             Destroy(go);
         }
         mButtons.Clear();
+        mLastClickedSeries = null;
     }
 }

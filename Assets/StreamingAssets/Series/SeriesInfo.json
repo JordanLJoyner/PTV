@@ -326,6 +326,22 @@
                 "Mecha​",
                 "Anime​"
             ]
+        },
+        {
+            "Name": "Japanese Spiderman",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Japanese Spiderman",
+            "Tags": [
+                "Superhero​",
+                "Live Action​"
+            ]
+        },
+        {
+            "Name": "Go-Busters",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Sentai\\Tokumei Sentai Go-Busters",
+            "Tags": [
+                "Superhero​",
+                "Live Action​"
+            ]
         }
     ]
 }
