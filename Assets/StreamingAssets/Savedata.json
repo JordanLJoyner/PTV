@@ -6,15 +6,39 @@
         },
         {
             "showName": "Sentai Ryusolger",
-            "nextEpisodeIndex": 8
+            "nextEpisodeIndex": 14
         },
         {
             "showName": "Kyoruger",
-            "nextEpisodeIndex": 27
+            "nextEpisodeIndex": 48
         },
         {
             "showName": "Medabots",
             "nextEpisodeIndex": 4
+        },
+        {
+            "showName": "Justice League",
+            "nextEpisodeIndex": 0
+        },
+        {
+            "showName": "Ultraman Geed",
+            "nextEpisodeIndex": 3
+        },
+        {
+            "showName": "Zegapain",
+            "nextEpisodeIndex": 6
+        },
+        {
+            "showName": "Zenkaiger",
+            "nextEpisodeIndex": 3
+        },
+        {
+            "showName": "Kamen Rider Gaim",
+            "nextEpisodeIndex": 2
+        },
+        {
+            "showName": "Go-Busters",
+            "nextEpisodeIndex": 2
         }
     ]
 }

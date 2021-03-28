@@ -30,6 +30,7 @@ public class ServerRoom {
     public string song_name = "no song registered";
     public string time = "";
     public string owner = "";
+    public string draftOptions = "";
 
     public ServerRoom(string name, string url, int id, int viewers, string series) {
         this.theater_name = name;
@@ -59,6 +60,7 @@ public class RESTApiTest : MonoBehaviour {
     private bool mInitialConnection = true;
     private bool mStartedCleanUp = false;
     private bool mCleanupComplete = false;
+    private static List<string> mQueuedDraftOptions = new List<string>();
 
     // Start is called before the first frame update
     void Start() {
@@ -114,9 +116,15 @@ public class RESTApiTest : MonoBehaviour {
         }
     }*/
 
-    private static IEnumerator UpdateOnServer(string endPoint, string fieldName, string value) {
+    private static IEnumerator PostOnServer(string endPoint) {
+        return UpdateOnServer(endPoint, "", "");
+    }
+
+    private static IEnumerator UpdateOnServer(string endPoint, string fieldName, string value, Action onSuccessCallback = null) {
         WWWForm form = new WWWForm();
-        form.AddField(fieldName, value);
+        if (!fieldName.Equals("")) {
+            form.AddField(fieldName, value);
+        }
 
         using (UnityWebRequest www = UnityWebRequest.Post(endPoint, form)) {
             yield return www.SendWebRequest();
@@ -124,6 +132,7 @@ public class RESTApiTest : MonoBehaviour {
             if (www.isNetworkError || www.isHttpError) {
                 Debug.Log(www.error + " for " + endPoint);
             } else {
+                onSuccessCallback?.Invoke();
                 //Debug.Log("Form upload complete!");
             }
         }
@@ -163,6 +172,28 @@ public class RESTApiTest : MonoBehaviour {
         yield return UpdateOnServer(getFullRoomUrl() + "/time/", "TimeLeft", timeRemaining);
     }
 
+    //Pass the server endpoint a comma separated list
+    public static IEnumerator StartDraftOnServer(List<string> draftOptions) {
+        if (mRoomId == -1) {
+            mQueuedDraftOptions = draftOptions;
+            yield break;
+        }
+
+        string strDraftOptions = "";
+        for(int i=0; i < draftOptions.Count; i++) {
+            strDraftOptions += draftOptions[i];
+            if(i < draftOptions.Count - 1) {
+                strDraftOptions += ",";
+            }
+        }
+        yield return UpdateOnServer(getFullRoomUrl() + "/draft/start", "draftOptions", strDraftOptions);
+    }
+
+    public static IEnumerator EndDraftOnServer() {
+        yield return PostOnServer(getFullRoomUrl() + "/draft/end");
+    }
+
+
     private IEnumerator GetRoomId() {
         yield return new WaitForSeconds(0.1f);
         yield return GetFromServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/newid", OnRoomIdReceived);
@@ -174,19 +205,28 @@ public class RESTApiTest : MonoBehaviour {
         if(serverIdField != null) {
             serverIdField.text = "Server Id: " + value;
         }
-        CreateAvailableRoomOnServer();
+        CreateAvailableRoomOnServer(OnServerRoomCreated);
         StartCoroutine(StartRequestingMessageQueue());
     }
 
-    private void CreateAvailableRoomOnServer() {
+    private void CreateAvailableRoomOnServer(Action onSuccessfulRoomCreation) {
         var settings = FileUtils.LoadSettings();
         string streamUrl = settings.streamUrl;
         string theaterName = settings.theaterName;
         ServerRoom thisRoom = new ServerRoom(theaterName, streamUrl, mRoomId,0, mSeriesString);
-        StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom)));
+        StartCoroutine(UpdateOnServer(mBaseURL + mPortNumber + mServerPrefix + "/rooms/", "room",JsonUtility.ToJson(thisRoom), OnServerRoomCreated));
         if (mInitialConnection) {
             mInitialConnection = false;
             //countdownScript.OnInitialServerConnection();
+        }
+    }
+
+    private void OnServerRoomCreated() {
+        if (mQueuedDraftOptions.Count > 0) {
+            List<string> temp = new List<string>();
+            temp.AddRange(mQueuedDraftOptions);
+            StartCoroutine(StartDraftOnServer(temp));
+            mQueuedDraftOptions.Clear();
         }
     }
 
@@ -266,6 +306,9 @@ public class RESTApiTest : MonoBehaviour {
                     break;
                 case "END":
                     countdownScript.OnEndRequestFromServer();
+                    break;
+                case "VOTE":
+                    countdownScript.OnVoteRequestFromServer(serverMessages.values[i].Data);
                     break;
                 default:
                     break;

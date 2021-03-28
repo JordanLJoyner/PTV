@@ -18,7 +18,15 @@ public class VotingScript : MonoBehaviour{
         }
     }
 
+    private void Reset() {
+        for(int i=0; i < mVotingTri.Count; i++) {
+            GameObject.Destroy(mVotingTri[i].mVotingBlock.gameObject);
+        }
+        mVotingTri.Clear(); 
+    }
+
     public void StartVote(List<string> voteOptions) {
+        Reset();
         for (int i = 0; i < voteOptions.Count; i++) {
             string voteOption = voteOptions[i];
             GameObject newVoteBlock = Instantiate(m_VotingBlockPrefab, m_VotingGrid.transform);
@@ -26,6 +34,7 @@ public class VotingScript : MonoBehaviour{
             block.Init(voteOption, i);
             mVotingTri.Add(new VotingStruct(block, voteOption));
         }
+        StartCoroutine(RESTApiTest.StartDraftOnServer(voteOptions));
     }
 
     public void RegisterVote(int index) {
@@ -61,7 +70,7 @@ public class VotingScript : MonoBehaviour{
                 indexesWithHighestVotes.Add(i);
             }
         }
-        int chosenIndex = UnityEngine.Random.Range(0, indexesWithHighestVotes.Count);
+        int chosenIndex = indexesWithHighestVotes[UnityEngine.Random.Range(0, indexesWithHighestVotes.Count)];
         return mVotingTri[chosenIndex].mName;
     }
 }

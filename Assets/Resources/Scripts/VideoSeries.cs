@@ -15,6 +15,7 @@ public enum ScheduleType{
     RANDOM_FROM_SHOWS, //Does hard random from the list of supplied shows
     SCHEDULED_BUT_RANDOM_EPISODE, //Load the schedule, go through it randomly
     SEQUENTIAL, //Load the schedule go through it in order
+    DRAFT, //Distributed random, but we draft from top 3
     MAX
 }
 

@@ -38,7 +38,6 @@ public class CountdownScript : MonoBehaviour
     [Header("Voting")]
     [SerializeField] VotingScript mVotingScript;
     [SerializeField] private GameObject m_DraftUi;
-    bool mDraftMode = false;
 
     [Header("Quick Settings")]
     [SerializeField] private bool m_SkipBumps = false;
@@ -92,7 +91,7 @@ public class CountdownScript : MonoBehaviour
 
         if (mRunLocally) {
             UpdateCurrentShowText();
-            UpdateScheduleScript();
+            InitScheduleScript();
             ResetToCountdownState(preshowWait);
         }
 
@@ -174,7 +173,6 @@ public class CountdownScript : MonoBehaviour
         //Load the schedule
         mSchedule = FileUtils.LoadSchedule();
         Schedule schedule = FileUtils.LoadSchedule();
-        
 
         var seriesData = FileUtils.LoadSeriesData();
         foreach (VideoSeries series in seriesData) {
@@ -200,26 +198,45 @@ public class CountdownScript : MonoBehaviour
                 }
                 RandomizeFilePaths();
                 break;
-            case ScheduleType.DISTRIBUTED_RANDOM:
-                //pick a show at random first, then pick a random episode from the list, repeat X times
-                List<string> keyList = new List<string>(mSeriesDict.Keys);
-                
-                for (int i = 0; i < 100; i++) {
-                    string randomKey = keyList[UnityEngine.Random.Range(0, keyList.Count)];
-                    List<string> randomEpisodes = mSeriesDict[randomKey];
-                    if(randomEpisodes.Count == 0) {
-                        continue;
+            case ScheduleType.DRAFT: {
+                    //pick random shows and we'll draft with them 3 at a time
+                    List<string> keyList = new List<string>(mSeriesDict.Keys);
+                    for (int i = 0; i < 300; i++) {
+                        string randomKey = keyList[UnityEngine.Random.Range(0, keyList.Count)];
+                        List<string> randomEpisodes = mSeriesDict[randomKey];
+                        if (randomEpisodes.Count == 0) {
+                            continue;
+                        }
+                        string randomEpisode = "";
+                        try {
+                            randomEpisode = randomEpisodes[UnityEngine.Random.Range(0, randomEpisodes.Count)];
+                            mVideoFilePathsFound.Add(randomEpisode);
+                        } catch (Exception e) {
+                            Debug.Log("Series fucked up: " + randomKey);
+                        }
                     }
-                    string randomEpisode = "";
-                    try {
-                        randomEpisode = randomEpisodes[UnityEngine.Random.Range(0, randomEpisodes.Count)];
-                        mVideoFilePathsFound.Add(randomEpisode);
-                    } catch (Exception e) {
-                        Debug.Log("Series fucked up: " + randomKey);
-                    }
-                    
                 }
-                
+                break;
+            case ScheduleType.DISTRIBUTED_RANDOM: {
+                    //pick a show at random first, then pick a random episode from the list, repeat X times
+                    List<string> keyList = new List<string>(mSeriesDict.Keys);
+
+                    for (int i = 0; i < 100; i++) {
+                        string randomKey = keyList[UnityEngine.Random.Range(0, keyList.Count)];
+                        List<string> randomEpisodes = mSeriesDict[randomKey];
+                        if (randomEpisodes.Count == 0) {
+                            continue;
+                        }
+                        string randomEpisode = "";
+                        try {
+                            randomEpisode = randomEpisodes[UnityEngine.Random.Range(0, randomEpisodes.Count)];
+                            mVideoFilePathsFound.Add(randomEpisode);
+                        } catch (Exception e) {
+                            Debug.Log("Series fucked up: " + randomKey);
+                        }
+
+                    }
+                }
                 break;
             case ScheduleType.HARD_RANDOM:
             default:
@@ -232,10 +249,19 @@ public class CountdownScript : MonoBehaviour
         mNextShowText = GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex]);
     }
 
-    private void UpdateScheduleScript() {
+    private void InitScheduleScript() {
         List<string> itemNames = new List<string>();
 
         for (int i = 0; i < mVideoFilePathsFound.Count; i++) {
+            itemNames.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[i]));
+        }
+        scheduleScript.LoadSchedule(itemNames);
+    }
+
+    private void UpdateScheduleScript() {
+        List<string> itemNames = new List<string>();
+
+        for (int i = mVideoIndex; i < mVideoFilePathsFound.Count; i++) {
             itemNames.Add(GetEpisodeNameFromPath(mVideoFilePathsFound[i]));
         }
         scheduleScript.LoadSchedule(itemNames);
@@ -395,7 +421,7 @@ public class CountdownScript : MonoBehaviour
         if(state == eTVState.UNSET) {
             if (Input.GetKeyDown(KeyCode.Q)) {
                 UpdateCurrentShowText();
-                UpdateScheduleScript();
+                InitScheduleScript();
                 ResetToCountdownState(preshowWait);
             }
         }
@@ -425,22 +451,9 @@ public class CountdownScript : MonoBehaviour
             }
 
             if (Input.GetKeyDown(KeyCode.Q)) {
-
-                List<string> options = new List<string>();
-                
-                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[0])));
-                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[1])));
-                options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[2])));
-                mVotingScript.StartVote(options);
+                StartDraft();
             }
-
-            if (Input.GetKeyDown(KeyCode.W)) {
-                string winner = mVotingScript.GetVoteWinner();
-                Debug.Log("Vote Winner: " + winner);
-            }
-
-            if (Input.GetKeyDown(KeyCode.Alpha1)) {
-                Debug.Log("Vote 1");
+            if (Input.GetKeyDown(KeyCode.Alpha2)) {
                 mVotingScript.RegisterVote(1);
             }
             volumeSlider.gameObject.SetActive(true);
@@ -458,6 +471,10 @@ public class CountdownScript : MonoBehaviour
                 if (!videoPlayer.isPlaying) {
                     OnBumpCompleted();
                 }
+            }
+
+            if (Input.GetKeyDown(KeyCode.X)) {
+                SkipToEndOfBump();
             }
         }
         
@@ -487,25 +504,40 @@ public class CountdownScript : MonoBehaviour
     }
 
     #region Drafting
+    private bool mIsDrafting = false;
     private void StartDraft() {
-        mDraftMode = true;
+        if (mIsDrafting) {
+            return;
+        }
+        mIsDrafting = true;
+        scheduleScript.gameObject.SetActive(false);
         m_DraftUi.SetActive(true);
         List<string> options = new List<string>();
-        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[0])));
-        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[1])));
-        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[2])));
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex])));
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex+1])));
+        options.Add(FindSeriesForShow(GetEpisodeNameFromPath(mVideoFilePathsFound[mVideoIndex+2])));
         mVotingScript.StartVote(options);
     }
 
     private void CompleteDraftRound() {
+        mIsDrafting = false;
         m_DraftUi.SetActive(false);
+        scheduleScript.gameObject.SetActive(true);
+
         string seriesName = mVotingScript.GetVoteWinner();
         string filePath = GetRandomEpisodeForSeries(seriesName);
-        if(filePath == null) {
+        mVideoFilePathsFound.RemoveAt(mVideoIndex);
+        mVideoFilePathsFound.RemoveAt(mVideoIndex);
+        mVideoFilePathsFound.RemoveAt(mVideoIndex);
+
+        if (filePath == null) {
             Debug.LogError("Could not find episode for series: " + seriesName);
         } else {
             mVideoFilePathsFound.Insert(mVideoIndex, filePath);
         }
+        UpdateScheduleScript();
+
+        StartCoroutine(RESTApiTest.EndDraftOnServer());
     }
 
     private string GetRandomEpisodeForSeries(string seriesName) {
@@ -531,6 +563,9 @@ public class CountdownScript : MonoBehaviour
         //Fade the music in
         StartCoroutine(FadeInMusic());
         ShowTextFields();
+        if(mSchedule.scheduleType == ScheduleType.DRAFT) {
+            StartDraft();
+        }
     }
 
     void ResetToEndOfStreamState() {
@@ -561,12 +596,18 @@ public class CountdownScript : MonoBehaviour
     }
 
     private void OnCountdownAlmostComplete() {
+        if (mSchedule.scheduleType == ScheduleType.DRAFT) {
+            CompleteDraftRound();
+        }
         state = eTVState.TRANSITIONING;
         StartCoroutine(FadeOutMusic(musicPlayer.Stop));
         StartCoroutine(TriggerScrimFadeOut());
     }
 
     private void OnCountdownComplete() {
+        if(mSchedule.scheduleType == ScheduleType.DRAFT && mIsDrafting == true) {
+            CompleteDraftRound();
+        }
         if (m_SkipBumps) {
             TransitionOutOfCountdown();
             StartContentPlayback();
@@ -738,12 +779,20 @@ public class CountdownScript : MonoBehaviour
         // videoPlayer.clip = videoFiles[videoIndex++];
         videoPlayer.enabled = true;
         videoPlayer.Play();
+        StartCoroutine(ErrorCheckPlayback());
         //This has to be called after the call to viddyP.play
         state = eTVState.PLAYBACK;
         StartCoroutine(StartReminderTextCountdown());
         UpdateTimeOnServer();
     }
-    
+    private IEnumerator ErrorCheckPlayback() {
+        double time = videoPlayer.time;
+        yield return new WaitForSeconds(10.0f);
+        if(time == videoPlayer.time) {
+            CompletedShowPlayback();
+        }
+    }
+
     //StopVideoPlayback
     //StopShowPlayback
     private void CompletedShowPlayback() {
@@ -920,6 +969,12 @@ public class CountdownScript : MonoBehaviour
         }
     }
 
+    private void SkipToEndOfBump() {
+        if (state == eTVState.BUMP) {
+            videoPlayer.time = videoPlayer.length - 3;
+        }
+    }
+
     private void VetoNextShow() {
         if(state != eTVState.COUNTDOWN) {
             return;
@@ -966,7 +1021,7 @@ public class CountdownScript : MonoBehaviour
                 var randomEpisode = showFilePaths[UnityEngine.Random.Range(0, showFilePaths.Count)];
                 mVideoFilePathsFound.Insert(mVideoIndex,randomEpisode);
                 UpdateCurrentShowText();
-                UpdateScheduleScript();
+                InitScheduleScript();
                 //TODO actually remove any other instance of this episode
             } else {
                 Debug.LogError("Tried to pull a series that doesn't exist");
@@ -974,6 +1029,10 @@ public class CountdownScript : MonoBehaviour
         } else {
             Debug.Log("Tried to request a show outside of countdown state");
         }
+    }
+
+    public void OnVoteRequestFromServer(string showName) {
+        mVotingScript.RegisterVote(showName);
     }
 
     public void OnStartRequestFromServer(string commaSeparatedShowNames) {
@@ -990,7 +1049,7 @@ public class CountdownScript : MonoBehaviour
                 }
             }
             UpdateCurrentShowText();
-            UpdateScheduleScript();
+            InitScheduleScript();
             ResetToCountdownState(preshowWait);
         } else {
             Debug.Log("Tried to Start a show outside of starting state");

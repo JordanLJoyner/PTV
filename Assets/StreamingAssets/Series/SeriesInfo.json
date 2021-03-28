@@ -342,6 +342,42 @@
                 "Superhero​",
                 "Live Action​"
             ]
+        },
+        {
+            "Name": "Ultraman Geed",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Ultraman\\Ultraman Geed",
+            "Tags": [
+                "Superhero​",
+                "Live Action​",
+                "Tokusatsu​"
+            ]
+        },
+        {
+            "Name": "Justice League",
+            "FilePath": "D:\\Videos\\TV\\Justice League (Unlimited) (2001) S01-05 Season 01-05 (1080p BluRay x265 HEVC AAC 5.1 ByteShare) [UTR]",
+            "Tags": [
+                "Superhero​",
+                "Cartoon​",
+                "DC​"
+            ]
+        },
+        {
+            "Name": "Zenkaiger",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Sentai\\Kikai Sentai Zenkaiger",
+            "Tags": [
+                "Superhero​",
+                "Tokusatsu​",
+                "Live Action​"
+            ]
+        },
+        {
+            "Name": "Kamen Rider Gaim",
+            "FilePath": "D:\\Videos\\SUPA HERO TIME\\Kamen Rider\\Gaim",
+            "Tags": [
+                "Tokusatsu​",
+                "Superhero​",
+                "Live Action​"
+            ]
         }
     ]
 }

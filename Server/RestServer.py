@@ -23,7 +23,7 @@ messageQueue = {}
 
 mRoomId = 1
 mRooms = [
-	#Example room
+    #Example room
     {
         "name": "Fake Example Room",
         "theater_name": "the aetjer",
@@ -34,10 +34,11 @@ mRooms = [
         "series": "Batman Beyond,Jackie Chan Adventures,Medabots",
         "status": "available",
         "song_name": "No song registered",
-     	"firebaseid": "firebase1",
-     	"schedule": {},
-     	"time": "",
-        "owner": ""
+        "firebaseid": "firebase1",
+        "schedule": {},
+        "time": "",
+        "owner": "",
+        "draftOptions": ""
     }
     ]
 messageQueue[0] = []
@@ -394,6 +395,47 @@ class Viewers(Resource):
     def get(self, id):
         room = getRoomForId(id)
         return room["viewers"], serverSuccessCode
+
+########################
+#drafting
+########################
+class StartDraft(Resource):
+    def post(self, id):
+        draftOptionsField = "draftOptions"
+        parser = reqparse.RequestParser()
+        parser.add_argument(draftOptionsField)
+        args = parser.parse_args()
+        room = getRoomForId(id)
+        print(args)
+        print(room)
+        room["draftOptions"] = args[draftOptionsField]
+
+        return "started draft for room: " + str(id) + "\nOptions: " + room["draftOptions"], serverSuccessCode
+
+class EndDraft(Resource):
+    def post(self, id):
+        room = getRoomForId(id)
+        room["draftOptions"] = ""
+        return "ended", serverSuccessCode
+
+class VoteInDraft(Resource):
+    def post(self, id):
+        parser = reqparse.RequestParser()
+        parser.add_argument("vote")
+        args = parser.parse_args()
+        vote = args["vote"]
+        voteMessage = {"MessageType": "VOTE", "Data": vote }
+        messageQueue[id].append(voteMessage)
+        return "Voted for " + vote + " successfully", serverSuccessCode
+
+class GetDraftStatus(Resource):
+    def get(self,id):
+        room = getRoomForId(id)
+        return room["draftOptions"], serverSuccessCode
+#######################
+#end drafting
+#######################
+
 #left here for reference
 #api.add_resource(User, "/user/<string:name>")
 #api.add_resource(Util, "/Util/")
@@ -437,6 +479,12 @@ api.add_resource(ChangeStreamURL,totalRoomPrefix+"/url")
 api.add_resource(AddViewer, totalRoomPrefix+"/addviewer")
 api.add_resource(LoseViewer, totalRoomPrefix+"/loseviewer")
 api.add_resource(Viewers, totalRoomPrefix+"/viewers")
+
+#drafting
+api.add_resource(StartDraft,totalRoomPrefix+"/draft/start")
+api.add_resource(EndDraft,totalRoomPrefix+"/draft/end")
+api.add_resource(VoteInDraft,totalRoomPrefix+"/draft/vote")
+api.add_resource(GetDraftStatus,totalRoomPrefix+"/draft")
 
 # A welcome message to test our server  
 @app.route('/') 
