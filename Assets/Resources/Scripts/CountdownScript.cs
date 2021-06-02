@@ -785,10 +785,11 @@ public class CountdownScript : MonoBehaviour
         StartCoroutine(StartReminderTextCountdown());
         UpdateTimeOnServer();
     }
+
     private IEnumerator ErrorCheckPlayback() {
         double time = videoPlayer.time;
         yield return new WaitForSeconds(10.0f);
-        if(time == videoPlayer.time) {
+        if(time == videoPlayer.time && state == eTVState.PLAYBACK) {
             CompletedShowPlayback();
         }
     }
@@ -860,6 +861,14 @@ public class CountdownScript : MonoBehaviour
 
     public void _OnRewindClicked() {
         Rewind();
+    }
+
+    public void _OnEndVideoClicked() {
+        if(state == eTVState.BUMP) {
+            OnBumpCompleted();
+        } else if(state == eTVState.PLAYBACK) {
+            CompletedShowPlayback();
+        }
     }
 
     void Rewind() {
